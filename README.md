@@ -12,7 +12,7 @@ Przeciwnik:
 Wieża:
 -Budowa i miejsca
 -Ulepszanie
--Funkcjonowanie
+-Funkcjonowanie, Dmg fizyczny, magiczny, eksplozywny
 Mapa, trasa i pathfinding
 sklpep i surowce i ekonomia
 GameController, Przebieg całej rozgrywki
