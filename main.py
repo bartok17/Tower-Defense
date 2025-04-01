@@ -1,7 +1,8 @@
 import pygame as pg
 import constants as con
 import json
-import WaypointsCreator as wp
+import waypointsCreator as wp
+from Button import Button
 pg.init()
 clock = pg.time.Clock()
 
@@ -12,9 +13,14 @@ mapName = "map1"
 
 
 map_img = pg.image.load("map1.png").convert_alpha()
+button_img = pg.image.load("button_template.png").convert_alpha()
+
 waypoints = wp.load_lists_from_json(mapName + "_waypoints.json")
 print("waypoints loaded: ")
 print(waypoints)
+
+test_button = Button(con.SCREEN_WIDTH -200,120,button_img,True)
+
 
 run = True
 
@@ -29,7 +35,8 @@ while run:
     for name, road in waypoints.items():
         pg.draw.lines(screen,"red", False, road, 2)
 
-
+    if test_button.draw(screen):
+        print("test button pressed")
 
 
     for event in pg.event.get():

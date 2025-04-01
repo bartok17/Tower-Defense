@@ -1,8 +1,8 @@
 import json
 
 
-'''tutaj można tworzyć tablice dróg dla jednostek
-stwórz listy i użyj save_lists_to_json() aby skompilować'''
+'''here you can create waypoint dictionaries
+just create lists and use save_lists_to_json() to save'''
 
 def save_lists_to_json(filename, **lists):
 
