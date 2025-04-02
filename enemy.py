@@ -8,8 +8,8 @@ class Enemy:
         self.pos = pg.Vector2(waypoints[0]) 
         self.speed = 2            
         #Health
-        self.health = 100
-        self.max_health = 100
+        self.health = 300
+        self.max_health = 300
         #Attack
         self.damage = 10
         self.attack_speed = 1.0
@@ -22,7 +22,8 @@ class Enemy:
             next_target = pg.Vector2(self.waypoints[self.curr_waypoint + 1])
             direction = (next_target - self.pos).normalize()
             self.pos += direction * self.speed
-
+            if self.pos.distance_to(next_target) < self.speed:
+                self.curr_waypoint += 1
     def draw(self, map_surface):
         r = 255 * (1 - self.health/self.max_health)
         g = 255 * (self.health/self.max_health)
@@ -30,9 +31,9 @@ class Enemy:
         pg.draw.circle(map_surface, (r, g, b), (int(self.pos.x), int(self.pos.y)), 10)
 
     def take_damage(self, value):
-        self.hp -= value
-        if self.hp <= 0:
-            self.hp = 0
+        self.health -= value
+        if self.health <= 0:
+            self.health = 0
 
     def is_dead(self):
-        return self.hp > 0
+        return self.health <= 0
