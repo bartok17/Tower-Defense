@@ -3,6 +3,11 @@ import constants as con
 import json
 import waypointsCreator as wp
 from Button import Button
+
+from enemy import Enemy
+from random import randint
+
+
 pg.init()
 clock = pg.time.Clock()
 
@@ -21,6 +26,7 @@ print(waypoints)
 
 test_button = Button(con.SCREEN_WIDTH -200,120,button_img,True)
 
+enemies_list = []
 
 run = True
 
@@ -42,5 +48,12 @@ while run:
     for event in pg.event.get():
         if event.type == pg.QUIT:
             run = False
-
+    # testowanie enemy
+    enemy_random_path = randint(0,100)
+    if enemy_random_path == 0: enemies_list.append(Enemy(waypoints["road1"]))
+    if enemy_random_path == 1: enemies_list.append(Enemy(waypoints["road2"]))
+    for enemy in enemies_list:
+        enemy.update()
+        enemy.draw(screen)
+    #koniec testowania enemy
     pg.display.update()
