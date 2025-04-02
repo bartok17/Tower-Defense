@@ -23,6 +23,7 @@ class Enemy:
             direction = (next_target - self.pos).normalize()
             self.pos += direction * self.speed
             if self.pos.distance_to(next_target) < self.speed:
+                self.pos = next_target
                 self.curr_waypoint += 1
     def draw(self, map_surface):
         r = 255 * (1 - self.health/self.max_health)
