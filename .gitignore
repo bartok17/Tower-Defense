@@ -1,0 +1,39 @@
+# === Python cache ===
+__pycache__/
+*.py[cod]
+*.pyo
+
+# === Bytecode and compiled files ===
+*.so
+*.dll
+*.dylib
+*.exe
+
+# === Virtual environments ===
+env/
+venv/
+.venv/
+
+# === IDE/editor specific ===
+.vscode/
+.idea/
+*.sublime-project
+*.sublime-workspace
+
+# === OS generated files ===
+.DS_Store
+Thumbs.db
+
+# === Temporary files ===
+*.log
+*.bak
+*.tmp
+*.swp
+*.swo
+
+# === Jupyter Notebooks Checkpoints ===
+.ipynb_checkpoints/
+
+# === Pygame assets cache (if any tools use it) ===
+*.ogg~
+*.wav~

@@ -5,7 +5,9 @@ import waypointsCreator as wp
 from Button import Button
 
 from enemy import Enemy
+from dummyEntity import dummyEntity
 from random import randint
+from random import choice
 
 
 pg.init()
@@ -25,14 +27,18 @@ print("waypoints loaded: ")
 print(waypoints)
 
 test_button = Button(con.SCREEN_WIDTH -200,120,button_img,True)
-
+#Test entity for attacks
+base = dummyEntity((900, 900))
+#Enemies start values
 enemies_list = []
-
+enemies_spawn_timer = 0
+enemies_next_spawntime = randint(1000, 5000)
+#Enemies start values end
 run = True
 
 while run:
 
-    clock.tick(con.FPS)
+    clock_tick = clock.tick(con.FPS)
 
     screen.fill("black")
 
@@ -48,12 +54,30 @@ while run:
     for event in pg.event.get():
         if event.type == pg.QUIT:
             run = False
-    # testowanie enemy
-    enemy_random_path = randint(0,100)
-    if enemy_random_path == 0: enemies_list.append(Enemy(waypoints["road1"]))
-    if enemy_random_path == 1: enemies_list.append(Enemy(waypoints["road2"]))
+    #Enemies main start
+    enemies_spawn_timer += clock.get_time()
+    if enemies_spawn_timer >= enemies_next_spawntime:
+        enemy_path = choice(["road1", "road2"])
+        new_enemy = Enemy(waypoints[enemy_path])
+        enemies_list.append(new_enemy)
+        enemies_spawn_timer = 0
+        enemies_next_spawntime = randint(1000, 5000)
     for enemy in enemies_list:
-        enemy.update()
+        enemy.take_damage(0) #FOR TESTING ONLY
         enemy.draw(screen)
-    #koniec testowania enemy
+        distance_to_target = enemy.pos.distance_to(base.pos)
+        if distance_to_target > enemy.attack_range: enemy.update()
+        elif distance_to_target <= enemy.attack_range:
+            enemy.attack_cooldown -= clock_tick / 1000
+            if enemy.attack_cooldown <= 0:
+                base.take_damage(enemy.damage)
+                enemy.attack_cooldown = enemy.attack_speed
+                if base.is_dead():
+                    # print("Game Over")
+                    # run = False
+                    base.health = base.max_health
+        if enemy.is_dead():
+            enemies_list.remove(enemy)
+    base.draw(screen)
+    #Enemies main end
     pg.display.update()
