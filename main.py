@@ -2,6 +2,7 @@ import pygame as pg
 import constants as con
 import json
 import waypointsCreator as wp
+import waveCreator as wc
 from Button import Button
 
 import enemy
@@ -16,13 +17,13 @@ clock = pg.time.Clock()
 screen = pg.display.set_mode((con.SCREEN_WIDTH, con.SCREEN_HEIGHT))
 pg.display.set_caption("Bardzo fajna gra")
 
-mapName = "map1"
+map_name = "map1"
 
 
 map_img = pg.image.load("map1.png").convert_alpha()
 button_img = pg.image.load("button_template.png").convert_alpha()
 
-waypoints = wp.load_lists_from_json(mapName + "_waypoints.json")
+waypoints = wp.load_lists_from_json(map_name + "_waypoints.json")
 print("waypoints loaded: ")
 print(waypoints)
 
@@ -64,7 +65,7 @@ while run:
         enemies_spawn_timer = 0
         enemies_next_spawntime = randint(1000, 5000)
     for enemy in enemies_list:
-        #enemy.take_damage(1) #FOR TESTING ONLY
+        enemy.take_damage(1) #FOR TESTING ONLY
         enemy.draw(screen)
         distance_to_target = enemy.pos.distance_to(base.pos)
         if distance_to_target > enemy.attack_range: enemy.update()
