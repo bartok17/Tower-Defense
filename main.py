@@ -4,7 +4,7 @@ import json
 import waypointsCreator as wp
 from Button import Button
 
-from enemy import Enemy, Enemy_invisible, Enemy_armored, Enemy_magic_resistant
+import enemy
 from dummyEntity import dummyEntity
 from random import randint
 from random import choice
@@ -58,13 +58,13 @@ while run:
     enemies_spawn_timer += clock.get_time()
     if enemies_spawn_timer >= enemies_next_spawntime:
         enemy_path = choice(["road1", "road2"])
-        enemy_class = choice([Enemy, Enemy_invisible, Enemy_armored, Enemy_magic_resistant])
+        enemy_class = choice([enemy.Enemy])
         new_enemy = enemy_class(waypoints[enemy_path])
         enemies_list.append(new_enemy)
         enemies_spawn_timer = 0
         enemies_next_spawntime = randint(1000, 5000)
     for enemy in enemies_list:
-        enemy.take_damage(1) #FOR TESTING ONLY
+        #enemy.take_damage(1) #FOR TESTING ONLY
         enemy.draw(screen)
         distance_to_target = enemy.pos.distance_to(base.pos)
         if distance_to_target > enemy.attack_range: enemy.update()

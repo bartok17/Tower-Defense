@@ -2,6 +2,7 @@ import pygame as pg
 
 class Enemy:
     def __init__(self, waypoints):
+        self.id = 1
         #Movement
         self.waypoints = waypoints  
         self.curr_waypoint = 0      
@@ -19,7 +20,6 @@ class Enemy:
         self.attack_speed = 1.0
         self.attack_cooldown = 0
         self.attack_range = 50
-
 
     def update(self):
         if self.curr_waypoint + 1 < len(self.waypoints):
