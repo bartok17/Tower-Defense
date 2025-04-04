@@ -2,6 +2,7 @@ import pygame as pg
 import constants as con
 import json
 import waypointsCreator as wp
+import waveCreator as wc
 from Button import Button
 
 from enemy import Enemy
