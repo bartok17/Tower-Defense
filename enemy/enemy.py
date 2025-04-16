@@ -3,25 +3,31 @@ import pygame as pg
 from enemy.abilities import Abilities
 
 class Enemy:
-    def __init__(self, waypoints, abilities=None, id=1):
-        self.id = id
-        #Movement
-        self.waypoints = waypoints  
-        self.curr_waypoint = 0      
-        self.pos = pg.Vector2(waypoints[0]) 
-        self.speed = 2            
-        #Health and damage reduction multipliers
-        self.health = 300
-        self.max_health = 300
-        self.armor = 1
-        self.magic_resistance = 1
-        #Attack
-        self.damage_multiplier = 1
-        self.damage = 10 * self.damage_multiplier
-        self.attack_speed = 1.0
+    def __init__(self, waypoints, template):
+        self.id = int(template.get("id", 1))
+        self.waypoints = waypoints
+        self.curr_waypoint = 0
+        self.pos = pg.Vector2(waypoints[0])
+
+        self.speed = template.get("speed", 1.0)
+        self.health = template.get("health", 300)
+        self.max_health = self.health
+        self.armor = template.get("armor", 1)
+        self.magic_resistance = template.get("magic_resistance", 1)
+
+        self.attack_range = template.get("attack_range", 50)
+        self.attack_speed = template.get("attack_speed", 1.0)
         self.attack_cooldown = 0
-        self.attack_range = 50
-        self.abilities = abilities or Abilities()
+        self.damage_multiplier = 1
+        self.damage = template.get("damage", 10)
+
+        self.abilities = Abilities()
+        for ability in template.get("abilities", []):
+            self.abilities.add_ability(ability)
+
+        self.color = tuple(template.get("color", [255, 255, 255]))
+        self.radius = template.get("radius", 10)
+
 
 
     def update(self):
@@ -34,10 +40,8 @@ class Enemy:
                 self.curr_waypoint += 1
                 
     def draw(self, map_surface):
-        r = 255 * (1 - self.health/self.max_health)
-        g = 255 * (self.health/self.max_health)
-        b = 0
-        pg.draw.circle(map_surface, (r, g, b), (int(self.pos.x), int(self.pos.y)), 10)
+        r, g, b = self.color
+        pg.draw.circle(map_surface, (r, g, b), (int(self.pos.x), int(self.pos.y)), self.radius)
 
     def take_damage(self, value):
         self.health -= value

@@ -3,6 +3,7 @@ import constants as con
 import json
 import waypointsCreator as wp
 import waveCreator as wc
+import waveLoader as wl
 from Button import Button
 from enemy.enemy import Enemy
 from dummyEntity import dummyEntity
@@ -30,9 +31,16 @@ test_button = Button(con.SCREEN_WIDTH -200,120,button_img,True)
 #Test entity for attacks
 base = dummyEntity((900, 900))
 #Enemies start values
+waves = wl.load_all_waves("waves.json", "enemyTemplates.json", waypoints)
+for i, wave in enumerate(waves):
+    print(f"[DEBUG] Wave {i+1}: {len(wave['enemies'])} enemies loaded")
+current_wave = 0
+wave_timer = 0
+wave_cooldown = 0
+enemy_spawn_index = 0
 enemies_list = []
-enemies_spawn_timer = 0
-enemies_next_spawntime = randint(1000, 5000)
+spawned_enemies = []
+
 #Enemies start values end
 run = True
 
@@ -54,29 +62,30 @@ while run:
     for event in pg.event.get():
         if event.type == pg.QUIT:
             run = False
-    #Enemies main start
-    enemies_spawn_timer += clock.get_time()
-    if enemies_spawn_timer >= enemies_next_spawntime:
-        enemy_path = choice(["road1", "road2"])
-        enemy_class = choice([Enemy])
-        new_enemy = enemy_class(waypoints[enemy_path])
-        enemies_list.append(new_enemy)
-        enemies_spawn_timer = 0
-        enemies_next_spawntime = randint(1000, 5000)
+    #Kontrola fal
+    if current_wave < len(waves):
+        wave_data = waves[current_wave]
+        wave_cooldown += clock_tick
+        if wave_cooldown >= wave_data["P_time"] * 1000:
+            if enemy_spawn_index < len(wave_data["enemies"]):
+                enemies_list.append(wave_data["enemies"][enemy_spawn_index])
+                enemy_spawn_index += 1
+            else:
+                current_wave += 1
+                enemy_spawn_index = 0
+                wave_cooldown = 0
     for enemy in enemies_list:
-        enemy.take_damage(1) #FOR TESTING ONLY
         enemy.draw(screen)
         distance_to_target = enemy.pos.distance_to(base.pos)
-        if distance_to_target > enemy.attack_range: enemy.update()
-        elif distance_to_target <= enemy.attack_range:
+        if distance_to_target > enemy.attack_range:
+            enemy.update()
+        else:
             enemy.attack_cooldown -= clock_tick / 1000
             if enemy.attack_cooldown <= 0:
                 base.take_damage(enemy.damage)
                 enemy.attack_cooldown = enemy.attack_speed
                 if base.is_dead():
-                    # print("Game Over")
-                    # run = False
-                    base.health = base.max_health
+                    base.health = base.max_health  # Reset na razie
         if enemy.is_dead():
             enemies_list.remove(enemy)
     base.draw(screen)

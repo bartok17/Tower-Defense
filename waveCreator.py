@@ -13,7 +13,7 @@ def save_waves_to_json(filename, waves_info):
 
 
 data = [
-    {"P_time": 30, "units": [[1,3],[2,2]], "mode": 1},
+    {"P_time": 5, "units": [[1,3],[2,2]], "mode": 1},
     {"P_time": 10, "units": [[1,5],[2,5]], "mode": 1},
     {"P_time": 10, "units": [[1,15],[2,10]], "mode": 1}
 ]
