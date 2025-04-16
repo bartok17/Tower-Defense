@@ -24,10 +24,7 @@ def load_all_waves(waves_path, template_path, waypoints):
             str_id = str(enemy_id)
             template = dict(templates.get(str_id))  
             template["id"] = enemy_id  
-            if template is None:
-                print(f"[Warning] Unknown enemy ID {enemy_id} in wave")
-                continue
-            for i in range(count):
+            for _ in range(count):
                 enemy = Enemy(waypoints[choice(list(waypoints.keys()))], template)
                 enemies.append(enemy)
 

@@ -51,6 +51,3 @@ class Enemy:
     def is_dead(self):
         return self.health <= 0
     
-    def check_abilities(self, ability):
-        pass
-
