@@ -1,8 +1,10 @@
 import pygame as pg
 
+from enemy.abilities import Abilities
+
 class Enemy:
-    def __init__(self, waypoints):
-        self.id = 1
+    def __init__(self, waypoints, abilities=None, id=1):
+        self.id = id
         #Movement
         self.waypoints = waypoints  
         self.curr_waypoint = 0      
@@ -14,12 +16,13 @@ class Enemy:
         self.armor = 1
         self.magic_resistance = 1
         #Attack
-        self.attack_type = "s" #s-standard, r-ranged, m-magic
         self.damage_multiplier = 1
         self.damage = 10 * self.damage_multiplier
         self.attack_speed = 1.0
         self.attack_cooldown = 0
         self.attack_range = 50
+        self.abilities = abilities or Abilities()
+
 
     def update(self):
         if self.curr_waypoint + 1 < len(self.waypoints):
@@ -43,3 +46,7 @@ class Enemy:
 
     def is_dead(self):
         return self.health <= 0
+    
+    def check_abilities(self, ability):
+        pass
+

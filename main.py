@@ -4,8 +4,7 @@ import json
 import waypointsCreator as wp
 import waveCreator as wc
 from Button import Button
-
-import enemy
+from enemy.enemy import Enemy
 from dummyEntity import dummyEntity
 from random import randint
 from random import choice
@@ -59,7 +58,7 @@ while run:
     enemies_spawn_timer += clock.get_time()
     if enemies_spawn_timer >= enemies_next_spawntime:
         enemy_path = choice(["road1", "road2"])
-        enemy_class = choice([enemy.Enemy])
+        enemy_class = choice([Enemy])
         new_enemy = enemy_class(waypoints[enemy_path])
         enemies_list.append(new_enemy)
         enemies_spawn_timer = 0

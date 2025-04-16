@@ -1,5 +1,13 @@
 from .enemy import Enemy # Base class for all enemies, id = 0
-from .enemyArmored import EnemyArmored # Armored enemy, id = 1
-from .enemy_magic_resistant import EnemyMagicResistant # Magic resistant enemy, id = 2
-from .enemy_ranged import EnemyRanged # Ranged enemy, id = 3
-from .enemy_boss import EnemyBoss # Boss enemy, id = 10
+from .enemyBoss import EnemyBoss # Boss enemy, id = 10
+from .abilities import Abilities 
+
+# Base class, id = 0
+# Invisible enemy, id = 1
+# Magic resistant enemy, id = 2
+# Ranged enemy, id = 3
+# Fast enemy, id = 4
+# Slow enemy, id = 5
+# Healer enemy, id = 6
+# Tank enemy, id = 7
+# Summoner enemy, id = 8
