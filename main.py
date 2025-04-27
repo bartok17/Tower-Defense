@@ -32,8 +32,6 @@ test_button = Button(con.SCREEN_WIDTH -200,120,button_img,True)
 base = dummyEntity((900, 900))
 #Enemies start values
 waves = wl.load_all_waves("waves.json", "enemyTemplates.json", waypoints)
-for i, wave in enumerate(waves):
-    print(f"[DEBUG] Wave {i+1}: {len(wave['enemies'])} enemies loaded")
 current_wave = 0
 wave_timer = 0
 wave_cooldown = 0
@@ -77,8 +75,7 @@ while run:
     for enemy in enemies_list:
         enemy.draw(screen)
         distance_to_target = enemy.pos.distance_to(base.pos)
-        if distance_to_target > enemy.attack_range:
-            enemy.update()
+        if distance_to_target > enemy.attack_range: enemy.update()
         else:
             enemy.attack_cooldown -= clock_tick / 1000
             if enemy.attack_cooldown <= 0:
@@ -86,8 +83,8 @@ while run:
                 enemy.attack_cooldown = enemy.attack_speed
                 if base.is_dead():
                     base.health = base.max_health  # Reset na razie
-        if enemy.is_dead():
-            enemies_list.remove(enemy)
+        if enemy.is_dead(): enemies_list.remove(enemy)
+    #Koniec kontroli fal
     base.draw(screen)
-    #Enemies main end
+    
     pg.display.update()
