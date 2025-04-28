@@ -16,84 +16,84 @@ def load_lists_from_json(filename):
     with open(filename, 'r') as f:
         return json.load(f)
 
+if __name__ == "__main__":
+    mapName = "map1"
 
-mapName = "map1"
-
-list1 = [(725,0),(725,585),(415,585),(0,1000)]
-list2 = [(725,0),(725,585),(970,1000)]
-
-
-pg.init()
-
-screen = pg.display.set_mode((con.SCREEN_WIDTH, con.SCREEN_HEIGHT))
-pg.display.set_caption("Waypoint Creator")
+    list1 = [(725,0),(725,585),(415,585),(0,1000)]
+    list2 = [(725,0),(725,585),(970,1000)]
 
 
-current_road = []
-all_roads = []
+    pg.init()
 
-map_img = pg.image.load(mapName + ".png").convert_alpha()
+    screen = pg.display.set_mode((con.SCREEN_WIDTH, con.SCREEN_HEIGHT))
+    pg.display.set_caption("Waypoint Creator")
 
-try:
-    loaded_lists = load_lists_from_json(mapName + "_waypoints.json")
-    all_roads = [loaded_lists[key] for key in sorted(loaded_lists.keys())]
-except FileNotFoundError:
-    print(f"No existing waypoints file found for {mapName}. Starting fresh.")
 
-running = True
-while running:
-    for event in pg.event.get():
-        if event.type == pg.QUIT:
-            running = False
-        elif event.type == pg.MOUSEBUTTONDOWN:
-            pos = pg.mouse.get_pos()
-            last_point = current_road[-1] if current_road else None
-            if(last_point):
-                if (abs(pos[0] - last_point[0])< 10):
-                    print(str( abs(pos[0] - last_point[0])))
-                    pos = (last_point[0], pos[1])
-                if (abs(pos[1] - last_point[1] )< 10):
-                    pos = (pos[0], last_point[1])
-                if(abs(pos[0] - last_point[0]) < 10 and abs(pos[1] - last_point[1]) < 10):
-                    continue
-            current_road.append(pos)
-            print(f"Added point: {pos}")
-        elif event.type == pg.KEYDOWN:
-           
-            if event.key == pg.K_BACKSPACE and pg.key.get_mods() & pg.KMOD_CTRL:
-                if all_roads:
-                    all_roads.pop()
-            elif event.key == pg.K_BACKSPACE and pg.key.get_mods() & pg.KMOD_SHIFT:
-                all_roads = []
-                current_road = []
-            elif event.key == pg.K_BACKSPACE:
-                if current_road:
-                    current_road.pop()
-            elif event.key == pg.K_RETURN:
-                if current_road:
-                    all_roads.append(current_road)
+    current_road = []
+    all_roads = []
+
+    map_img = pg.image.load(mapName + ".png").convert_alpha()
+
+    try:
+        loaded_lists = load_lists_from_json(mapName + "_waypoints.json")
+        all_roads = [loaded_lists[key] for key in sorted(loaded_lists.keys())]
+    except FileNotFoundError:
+        print(f"No existing waypoints file found for {mapName}. Starting fresh.")
+
+    running = True
+    while running:
+        for event in pg.event.get():
+            if event.type == pg.QUIT:
+                running = False
+            elif event.type == pg.MOUSEBUTTONDOWN:
+                pos = pg.mouse.get_pos()
+                last_point = current_road[-1] if current_road else None
+                if(last_point):
+                    if (abs(pos[0] - last_point[0])< 10):
+                        print(str( abs(pos[0] - last_point[0])))
+                        pos = (last_point[0], pos[1])
+                    if (abs(pos[1] - last_point[1] )< 10):
+                        pos = (pos[0], last_point[1])
+                    if(abs(pos[0] - last_point[0]) < 10 and abs(pos[1] - last_point[1]) < 10):
+                        continue
+                current_road.append(pos)
+                print(f"Added point: {pos}")
+            elif event.type == pg.KEYDOWN:
+            
+                if event.key == pg.K_BACKSPACE and pg.key.get_mods() & pg.KMOD_CTRL:
+                    if all_roads:
+                        all_roads.pop()
+                elif event.key == pg.K_BACKSPACE and pg.key.get_mods() & pg.KMOD_SHIFT:
+                    all_roads = []
                     current_road = []
-            elif event.key == pg.K_s:
-                road_dict = {f"road{i+1}": road for i, road in enumerate(all_roads)}
-                save_lists_to_json(mapName + "_waypoints.json", **road_dict)
-                print("Waypoints saved.")
+                elif event.key == pg.K_BACKSPACE:
+                    if current_road:
+                        current_road.pop()
+                elif event.key == pg.K_RETURN:
+                    if current_road:
+                        all_roads.append(current_road)
+                        current_road = []
+                elif event.key == pg.K_s:
+                    road_dict = {f"road{i+1}": road for i, road in enumerate(all_roads)}
+                    save_lists_to_json(mapName + "_waypoints.json", **road_dict)
+                    print("Waypoints saved.")
 
-    screen.fill(con.WHITE)
-    screen.blit(map_img, (0, 0))
-    for road in all_roads:
-        if len(road) > 1:
-            pg.draw.lines(screen, con.RED, False, road, 3)
-        for point in road:
+        screen.fill(con.WHITE)
+        screen.blit(map_img, (0, 0))
+        for road in all_roads:
+            if len(road) > 1:
+                pg.draw.lines(screen, con.RED, False, road, 3)
+            for point in road:
+                pg.draw.circle(screen, con.RED, point, 5)
+        if len(current_road) > 1:
+            pg.draw.lines(screen, con.RED, False, current_road, 3)
+        for point in current_road:
             pg.draw.circle(screen, con.RED, point, 5)
-    if len(current_road) > 1:
-        pg.draw.lines(screen, con.RED, False, current_road, 3)
-    for point in current_road:
-        pg.draw.circle(screen, con.RED, point, 5)
 
-    pg.display.flip()
+        pg.display.flip()
 
-pg.quit()
+    pg.quit()
 
 
-loaded_lists = load_lists_from_json(mapName + "_waypoints.json")
-print(loaded_lists)
+    loaded_lists = load_lists_from_json(mapName + "_waypoints.json")
+    print(loaded_lists)
