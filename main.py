@@ -1,66 +1,89 @@
 import pygame as pg
 import constants as con
-import json
-import waypointsCreator as wp
-import waveCreator as wc
+from waypointsCreator import load_lists_from_json
 import waveLoader as wl
 from Button import Button
-from enemy.enemy import Enemy
+from Tower import Tower
 from dummyEntity import dummyEntity
-from random import randint
-from random import choice
 
 
-pg.init()
-clock = pg.time.Clock()
-
-screen = pg.display.set_mode((con.SCREEN_WIDTH, con.SCREEN_HEIGHT))
-pg.display.set_caption("Bardzo fajna gra")
-
-map_name = "map1"
 
 
-map_img = pg.image.load("map1.png").convert_alpha()
-button_img = pg.image.load("button_template.png").convert_alpha()
+# Main game loop
+def main():
+    screen, clock = initialize_game()
+    map_img, button_img, waypoints = load_assets()
 
-waypoints = wp.load_lists_from_json(map_name + "_waypoints.json")
-print("waypoints loaded: ")
-print(waypoints)
+    test_button = Button(con.SCREEN_WIDTH - 200, 120, button_img, True)
+    base = dummyEntity((900, 900))
 
-test_button = Button(con.SCREEN_WIDTH -200,120,button_img,True)
-#Test entity for attacks
-base = dummyEntity((900, 900))
-#Enemies start values
-waves = wl.load_all_waves("waves.json", "enemyTemplates.json", waypoints)
-current_wave = 0
-wave_timer = 0
-wave_cooldown = 0
-enemy_spawn_index = 0
-enemies_list = []
-spawned_enemies = []
+    waves = wl.load_all_waves("waves.json", "enemyTemplates.json", waypoints)
+    current_wave = 0
+    wave_cooldown = 0
+    enemy_spawn_index = 0
+    enemies_list = []
+    spawned_towers = []
 
-#Enemies start values end
-run = True
+    run = True
+    while run:
+        clock_tick = clock.tick(con.FPS)
+        screen.fill("black")
+        screen.blit(map_img, (0, 0))
 
-while run:
+        draw_waypoints(screen, waypoints)
 
-    clock_tick = clock.tick(con.FPS)
+        if test_button.draw(screen):
+            print("Test button pressed")
 
-    screen.fill("black")
+        run = handle_events(spawned_towers)
 
-    screen.blit(map_img, (0, 0))
+        current_wave, wave_cooldown, enemy_spawn_index = handle_waves(
+            clock_tick, waves, current_wave, wave_cooldown, enemy_spawn_index, enemies_list
+        )
 
-    for name, road in waypoints.items():
-        pg.draw.lines(screen,"red", False, road, 2)
+        update_enemies(clock_tick, enemies_list, base, screen)
+        update_towers(clock_tick, spawned_towers, enemies_list, waypoints)
 
-    if test_button.draw(screen):
-        print("test button pressed")
+        base.draw(screen)
+        pg.display.update()
+
+def initialize_game():
+    pg.init()
+    screen = pg.display.set_mode((con.SCREEN_WIDTH, con.SCREEN_HEIGHT))
+    pg.display.set_caption("Bardzo fajna gra")
+    clock = pg.time.Clock()
+    return screen, clock
 
 
+def load_assets():
+    map_img = pg.image.load("map1.png").convert_alpha()
+    button_img = pg.image.load("button_template.png").convert_alpha()
+    waypoints = load_lists_from_json("map1_waypoints.json")
+    print("Waypoints loaded:", waypoints)
+    return map_img, button_img, waypoints
+
+
+def handle_events(spawned_towers):
     for event in pg.event.get():
         if event.type == pg.QUIT:
-            run = False
-    #Kontrola fal
+            return False
+        elif event.type == pg.MOUSEBUTTONDOWN and event.button == 1:  
+            keys = pg.key.get_pressed()
+            if keys[pg.K_LCTRL] or keys[pg.K_RCTRL]:  
+                mouse_pos = pg.mouse.get_pos()
+                new_tower = Tower(mouse_pos, 10, 2)  
+                spawned_towers.append(new_tower)
+                
+                print(f"Created a Tower at {mouse_pos}")
+    return True
+
+
+def draw_waypoints(screen, waypoints):
+    for name, road in waypoints.items():
+        pg.draw.lines(screen, "red", False, road, 2)
+
+
+def handle_waves(clock_tick, waves, current_wave, wave_cooldown, enemy_spawn_index, enemies_list):
     if current_wave < len(waves):
         wave_data = waves[current_wave]
         wave_cooldown += clock_tick
@@ -72,19 +95,29 @@ while run:
                 current_wave += 1
                 enemy_spawn_index = 0
                 wave_cooldown = 0
-    for enemy in enemies_list:
+    return current_wave, wave_cooldown, enemy_spawn_index
+
+
+def update_enemies(clock_tick, enemies_list, base, screen):
+    for enemy in enemies_list[:]:
         enemy.draw(screen)
         distance_to_target = enemy.pos.distance_to(base.pos)
-        if distance_to_target > enemy.attack_range: enemy.update()
+        if distance_to_target > enemy.attack_range:
+            enemy.update()
         else:
             enemy.attack_cooldown -= clock_tick / 1000
             if enemy.attack_cooldown <= 0:
                 base.take_damage(enemy.damage)
                 enemy.attack_cooldown = enemy.attack_speed
                 if base.is_dead():
-                    base.health = base.max_health  # Reset na razie
-        if enemy.is_dead(): enemies_list.remove(enemy)
-    #Koniec kontroli fal
-    base.draw(screen)
-    
-    pg.display.update()
+                    base.health = base.max_health  # Reset for now
+        if enemy.is_dead():
+            enemies_list.remove(enemy)
+def update_towers(clock_tick, towers, enemies_list,waypoints):
+    for tower in towers:
+        tower.attack(enemies_list, 1, waypoints)
+        tower.current_reload -= clock_tick / 1000
+        if tower.current_reload <= 0:
+            tower.current_reload = tower.reload_time
+if __name__ == "__main__":
+    main()
