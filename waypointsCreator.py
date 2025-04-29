@@ -14,7 +14,6 @@ def load_lists_from_json(filename):
     with open(filename, 'r') as f:
         return json.load(f)
 
-
 if __name__ == "__main__":
     mapName = "map1"
 

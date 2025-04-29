@@ -5,7 +5,9 @@ import waveLoader as wl
 from Button import Button
 from Tower import Tower, TowerStats,create_tower
 from dummyEntity import dummyEntity
-
+from economy import ResourcesManager
+from building.buildingBlueprint import BuildingBlueprint
+import building.buildManager as bm 
 
 
 
@@ -34,9 +36,9 @@ def main():
 
         draw_waypoints(screen, waypoints)
 
+
         if test_button.draw(screen):
             print("Test button pressed")
-
         run = handle_events(spawned_towers)
 
         current_wave, wave_cooldown, enemy_spawn_index = handle_waves(
@@ -64,6 +66,11 @@ def load_assets():
     print("Waypoints loaded:", waypoints)
     return map_img, button_img, waypoints
 
+    for idx, btn in enumerate(building_buttons):
+        if btn.draw(screen):
+            selected_blueprint = building_blueprints[idx]
+            mode = "Building"
+            print(f"Selected: {selected_blueprint.name}")
 
 def handle_events(spawned_towers):
     for event in pg.event.get():
@@ -111,7 +118,6 @@ def update_enemies(clock_tick, enemies_list, base, screen):
             if enemy.attack_cooldown <= 0:
                 base.take_damage(enemy.damage)
                 enemy.attack_cooldown = enemy.attack_speed
-                if base.is_dead():
                     base.health = base.max_health  # Reset for now
         if enemy.is_dead():
             enemies_list.remove(enemy)
