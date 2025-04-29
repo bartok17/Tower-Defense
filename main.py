@@ -3,13 +3,10 @@ import constants as con
 from waypointsCreator import load_lists_from_json
 import waveLoader as wl
 from Button import Button
-from Tower import Tower, TowerStats,create_tower
+from Tower import Tower, create_tower
 from dummyEntity import dummyEntity
 
 
-
-
-# Main game loop
 def main():
     screen, clock = initialize_game()
     map_img, button_img, waypoints = load_assets()
@@ -17,14 +14,9 @@ def main():
     test_button = Button(con.SCREEN_WIDTH - 200, 120, button_img, True)
     base = dummyEntity((900, 900))
 
-    projectiles = []
-
+    projectiles, enemies_list, spawned_towers = [], [], []
     waves = wl.load_all_waves("waves.json", "enemyTemplates.json", waypoints)
-    current_wave = 0
-    wave_cooldown = 0
-    enemy_spawn_index = 0
-    enemies_list = []
-    spawned_towers = []
+    current_wave, wave_cooldown, enemy_spawn_index = 0, 0, 0
 
     run = True
     while run:
@@ -33,21 +25,17 @@ def main():
         screen.blit(map_img, (0, 0))
 
         draw_waypoints(screen, waypoints)
-
         if test_button.draw(screen):
             print("Test button pressed")
 
         run = handle_events(spawned_towers)
-
         current_wave, wave_cooldown, enemy_spawn_index = handle_waves(
             clock_tick, waves, current_wave, wave_cooldown, enemy_spawn_index, enemies_list
         )
 
-        update_enemies(clock_tick, enemies_list, base, screen)
-        update_towers(clock_tick, spawned_towers, enemies_list, waypoints, screen, projectiles)
-        update_projectiles(clock_tick, projectiles,screen=screen)
-        base.draw(screen)
+        update_game_state(clock_tick, screen, base, enemies_list, spawned_towers, waypoints, projectiles)
         pg.display.update()
+
 
 def initialize_game():
     pg.init()
@@ -69,15 +57,18 @@ def handle_events(spawned_towers):
     for event in pg.event.get():
         if event.type == pg.QUIT:
             return False
-        elif event.type == pg.MOUSEBUTTONDOWN and event.button == 1:  
-            keys = pg.key.get_pressed()
-            if keys[pg.K_LCTRL] or keys[pg.K_RCTRL]:  
-                mouse_pos = pg.mouse.get_pos()
-                new_tower = create_tower(mouse_pos, "basic")  
-                spawned_towers.append(new_tower)
-                
-                print(f"Created a Tower at {mouse_pos}")
+        elif event.type == pg.MOUSEBUTTONDOWN and event.button == 1:
+            handle_tower_creation(spawned_towers)
     return True
+
+
+def handle_tower_creation(spawned_towers):
+    keys = pg.key.get_pressed()
+    if keys[pg.K_LCTRL] or keys[pg.K_RCTRL]:
+        mouse_pos = pg.mouse.get_pos()
+        new_tower = create_tower(mouse_pos, "basic")
+        spawned_towers.append(new_tower)
+        print(f"Created a Tower at {mouse_pos}")
 
 
 def draw_waypoints(screen, waypoints):
@@ -95,36 +86,51 @@ def handle_waves(clock_tick, waves, current_wave, wave_cooldown, enemy_spawn_ind
                 enemy_spawn_index += 1
             else:
                 current_wave += 1
-                enemy_spawn_index = 0
-                wave_cooldown = 0
+                enemy_spawn_index, wave_cooldown = 0, 0
     return current_wave, wave_cooldown, enemy_spawn_index
+
+
+def update_game_state(clock_tick, screen, base, enemies_list, spawned_towers, waypoints, projectiles):
+    update_enemies(clock_tick, enemies_list, base, screen)
+    update_towers(clock_tick, spawned_towers, enemies_list, waypoints, screen, projectiles)
+    update_projectiles(clock_tick, projectiles, screen)
+    base.draw(screen)
 
 
 def update_enemies(clock_tick, enemies_list, base, screen):
     for enemy in enemies_list[:]:
         enemy.draw(screen)
-        distance_to_target = enemy.pos.distance_to(base.pos)
-        if distance_to_target > enemy.attack_range:
+        if enemy.pos.distance_to(base.pos) > enemy.attack_range:
             enemy.update()
         else:
-            enemy.attack_cooldown -= clock_tick / 1000
-            if enemy.attack_cooldown <= 0:
-                base.take_damage(enemy.damage)
-                enemy.attack_cooldown = enemy.attack_speed
-                if base.is_dead():
-                    base.health = base.max_health  # Reset for now
+            handle_enemy_attack(clock_tick, enemy, base)
         if enemy.is_dead():
             enemies_list.remove(enemy)
-def update_towers(clock_tick, towers: list[Tower], enemies_list, waypoints, screen, projectiles):
+
+
+def handle_enemy_attack(clock_tick, enemy, base):
+    enemy.attack_cooldown -= clock_tick / 1000
+    if enemy.attack_cooldown <= 0:
+        base.take_damage(enemy.damage)
+        enemy.attack_cooldown = enemy.attack_speed
+        if base.is_dead():
+            base.health = base.max_health  # Reset for now
+
+
+def update_towers(clock_tick, towers, enemies_list, waypoints, screen, projectiles):
     for tower in towers:
         tower.attack(enemies_list, 1, waypoints, projectiles)
         tower.current_reload -= clock_tick / 1000
         tower.draw(screen)
-def update_projectiles(clock_tick, projectiles,screen):
+
+
+def update_projectiles(clock_tick, projectiles, screen):
     for projectile in projectiles[:]:
         projectile.update()
         if not projectile.active:
             projectiles.remove(projectile)
         projectile.draw(screen)
+
+
 if __name__ == "__main__":
     main()

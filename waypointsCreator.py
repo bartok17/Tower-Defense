@@ -51,6 +51,15 @@ if __name__ == "__main__":
                         pos = (last_point[0], pos[1])
                     if (abs(pos[1] - last_point[1] )< 10):
                         pos = (pos[0], last_point[1])
+                    if pos[0] < 10:
+                        pos = (0, pos[1])
+                    elif pos[0] > con.SCREEN_WIDTH - 10:
+                        pos = (con.SCREEN_WIDTH, pos[1])
+                    if pos[1] < 10:
+                        pos = (pos[0], 0)
+                    elif pos[1] > con.SCREEN_HEIGHT - 10:
+                        pos = (pos[0], con.SCREEN_HEIGHT)
+
                     if(abs(pos[0] - last_point[0]) < 10 and abs(pos[1] - last_point[1]) < 10):
                         continue
                 current_road.append(pos)

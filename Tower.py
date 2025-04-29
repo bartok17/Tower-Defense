@@ -2,18 +2,16 @@
 from Button import Button
 from enemy.enemy import Enemy
 from dummyEntity import dummyEntity
-from random import randint
-from random import choice
+from random import randint, choice
 from projectile import Projectile
 import constants as con
 import pygame as pg
 
 
 class TowerStats:
-    def __init__(self, range: int, damage: int, reload_time: float,explosive: bool = False, explosion_radius: int = 30):
+    def __init__(self, range: int, damage: int, reload_time: float, explosive: bool = False, explosion_radius: int = 30):
         self.explosive = explosive
         self.explosion_radius = explosion_radius
-
         self.range = range
         self.damage = damage
         self.reload_time = reload_time
@@ -25,16 +23,15 @@ class TowerStats:
 
 
 class Tower:
-    def __init__(self, pos: tuple[int, int], range, damage, reload_time,explosive: bool = False, explosion_radius: int = 30):
+    def __init__(self, pos: tuple[int, int], stats: TowerStats):
         self.pos = pg.math.Vector2(pos)
-        self.stats = TowerStats(range, damage, reload_time,explosive, explosion_radius)
+        self.stats = stats
         self.current_reload = 0
 
-    def is_in_range(self, enemy):
-        distance = self.pos.distance_to(pg.math.Vector2(enemy.pos))
-        return distance <= self.stats.range
+    def is_in_range(self, enemy: Enemy) -> bool:
+        return self.pos.distance_to(pg.math.Vector2(enemy.pos)) <= self.stats.range
 
-    def attack(self, enemies: list[Enemy], max_targets: int, waypoints: list[tuple[int, int]], projectiles: list):
+    def attack(self, enemies: list[Enemy], max_targets: int, waypoints: list[tuple[int, int]], projectiles: list[Projectile]):
         if not waypoints or self.current_reload > 0:
             return
 
@@ -43,9 +40,12 @@ class Tower:
             for enemy in enemies if self.is_in_range(enemy)
         ]
         enemies_in_range.sort(key=lambda item: item[1])
+
         attacked = False
         for enemy, _ in enemies_in_range[:max_targets]:
-            projectile = Projectile(self.pos, enemy, self.stats.damage,0.5, self.stats.explosive, self.stats.explosion_radius)
+            projectile = Projectile(
+                self.pos, enemy, self.stats.damage, 0.5, self.stats.explosive, self.stats.explosion_radius
+            )
             projectiles.append(projectile)
             attacked = True
 
@@ -61,16 +61,13 @@ class Tower:
 
 
 TOWER_PRESETS = {
-    "basic":    {"range": 100, "damage": 10, "reload_time": 1.0, "explosive": False},
-    "sniper":   {"range": 200, "damage": 30, "reload_time": 2.5, "explosive": False},
-    "rapid":    {"range": 80,  "damage": 5,  "reload_time": 0.3, "explosive": False},
-    "cannon":   {"range": 120, "damage": 20, "reload_time": 1.5, "explosive": True, "explosion_radius": 30},
+    "basic":    TowerStats(range=100, damage=10, reload_time=1.0, explosive=False),
+    "sniper":   TowerStats(range=200, damage=30, reload_time=2.5, explosive=False),
+    "rapid":    TowerStats(range=80,  damage=5,  reload_time=0.3, explosive=False),
+    "cannon":   TowerStats(range=120, damage=20, reload_time=1.5, explosive=True, explosion_radius=30),
 }
 
-def create_tower(pos, preset_name):
-    preset = TOWER_PRESETS[preset_name]
-    if not preset:
-        preset = TOWER_PRESETS["basic"]  # Fallback to basic preset if not found
-    return Tower(pos, preset.get("range", 100), preset.get("damage", 10), preset.get("reload_time", 1.0),
-                     preset.get("explosive", False), preset.get("explosion_radius", 30))
-    
+
+def create_tower(pos: tuple[int, int], preset_name: str) -> Tower:
+    stats = TOWER_PRESETS.get(preset_name, TOWER_PRESETS["basic"])
+    return Tower(pos, stats)
