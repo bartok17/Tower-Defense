@@ -7,12 +7,10 @@ import constants as con
 just create lists and use save_lists_to_json() to save'''
 
 def save_lists_to_json(filename, **lists):
-
     with open(filename, 'w') as f:
         json.dump(lists, f)
 
 def load_lists_from_json(filename):
-
     with open(filename, 'r') as f:
         return json.load(f)
 
@@ -22,12 +20,10 @@ if __name__ == "__main__":
     list1 = [(725,0),(725,585),(415,585),(0,1000)]
     list2 = [(725,0),(725,585),(970,1000)]
 
-
     pg.init()
 
     screen = pg.display.set_mode((con.SCREEN_WIDTH, con.SCREEN_HEIGHT))
     pg.display.set_caption("Waypoint Creator")
-
 
     current_road = []
     all_roads = []
@@ -59,7 +55,6 @@ if __name__ == "__main__":
                 current_road.append(pos)
                 print(f"Added point: {pos}")
             elif event.type == pg.KEYDOWN:
-            
                 if event.key == pg.K_BACKSPACE and pg.key.get_mods() & pg.KMOD_CTRL:
                     if all_roads:
                         all_roads.pop()
@@ -93,7 +88,6 @@ if __name__ == "__main__":
         pg.display.flip()
 
     pg.quit()
-
 
     loaded_lists = load_lists_from_json(mapName + "_waypoints.json")
     print(loaded_lists)
