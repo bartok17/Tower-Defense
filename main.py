@@ -3,7 +3,7 @@ import constants as con
 from waypointsCreator import load_lists_from_json
 import waveLoader as wl
 from Button import Button
-from Tower import Tower
+from Tower import Tower, TowerStats,create_tower
 from dummyEntity import dummyEntity
 
 
@@ -45,11 +45,7 @@ def main():
 
         update_enemies(clock_tick, enemies_list, base, screen)
         update_towers(clock_tick, spawned_towers, enemies_list, waypoints, screen, projectiles)
-        for projectile in projectiles[:]:
-            projectile.update()
-            projectile.draw(screen)
-            if not projectile.active:
-                projectiles.remove(projectile)
+        update_projectiles(clock_tick, projectiles,screen=screen)
         base.draw(screen)
         pg.display.update()
 
@@ -77,7 +73,7 @@ def handle_events(spawned_towers):
             keys = pg.key.get_pressed()
             if keys[pg.K_LCTRL] or keys[pg.K_RCTRL]:  
                 mouse_pos = pg.mouse.get_pos()
-                new_tower = Tower(mouse_pos, 100, 10,1)  
+                new_tower = create_tower(mouse_pos, "basic")  
                 spawned_towers.append(new_tower)
                 
                 print(f"Created a Tower at {mouse_pos}")
@@ -124,6 +120,11 @@ def update_towers(clock_tick, towers: list[Tower], enemies_list, waypoints, scre
         tower.attack(enemies_list, 1, waypoints, projectiles)
         tower.current_reload -= clock_tick / 1000
         tower.draw(screen)
-        
+def update_projectiles(clock_tick, projectiles,screen):
+    for projectile in projectiles[:]:
+        projectile.update()
+        if not projectile.active:
+            projectiles.remove(projectile)
+        projectile.draw(screen)
 if __name__ == "__main__":
     main()
