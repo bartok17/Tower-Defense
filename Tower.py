@@ -10,7 +10,10 @@ import pygame as pg
 
 
 class TowerStats:
-    def __init__(self, range: int, damage: int, reload_time: float):
+    def __init__(self, range: int, damage: int, reload_time: float,explosive: bool = False, explosion_radius: int = 30):
+        self.explosive = explosive
+        self.explosion_radius = explosion_radius
+
         self.range = range
         self.damage = damage
         self.reload_time = reload_time
@@ -22,9 +25,9 @@ class TowerStats:
 
 
 class Tower:
-    def __init__(self, pos: tuple[int, int], range, damage, reload_time):
+    def __init__(self, pos: tuple[int, int], range, damage, reload_time,explosive: bool = False, explosion_radius: int = 30):
         self.pos = pg.math.Vector2(pos)
-        self.stats = TowerStats(range, damage, reload_time)
+        self.stats = TowerStats(range, damage, reload_time,explosive, explosion_radius)
         self.current_reload = 0
 
     def is_in_range(self, enemy):
@@ -40,12 +43,14 @@ class Tower:
             for enemy in enemies if self.is_in_range(enemy)
         ]
         enemies_in_range.sort(key=lambda item: item[1])
-
+        attacked = False
         for enemy, _ in enemies_in_range[:max_targets]:
-            projectile = Projectile(self.pos, enemy, self.stats.damage)
+            projectile = Projectile(self.pos, enemy, self.stats.damage,0.5, self.stats.explosive, self.stats.explosion_radius)
             projectiles.append(projectile)
+            attacked = True
 
-        self.current_reload = self.stats.reload_time
+        if attacked:
+            self.current_reload = self.stats.reload_time
 
     def upgrade(self, range_increase=0, damage_increase=0, reload_time_decrease=0):
         self.stats.upgrade(range_increase, damage_increase, reload_time_decrease)
@@ -56,12 +61,16 @@ class Tower:
 
 
 TOWER_PRESETS = {
-    "basic":    {"range": 100, "damage": 10, "reload_time": 1.0},
-    "sniper":   {"range": 200, "damage": 30, "reload_time": 2.5},
-    "rapid":    {"range": 80,  "damage": 5,  "reload_time": 0.3},
-    "cannon":   {"range": 120, "damage": 20, "reload_time": 1.5},
+    "basic":    {"range": 100, "damage": 10, "reload_time": 1.0, "explosive": False},
+    "sniper":   {"range": 200, "damage": 30, "reload_time": 2.5, "explosive": False},
+    "rapid":    {"range": 80,  "damage": 5,  "reload_time": 0.3, "explosive": False},
+    "cannon":   {"range": 120, "damage": 20, "reload_time": 1.5, "explosive": True, "explosion_radius": 30},
 }
 
 def create_tower(pos, preset_name):
     preset = TOWER_PRESETS[preset_name]
-    return Tower(pos, preset["range"], preset["damage"], preset["reload_time"])
+    if not preset:
+        preset = TOWER_PRESETS["basic"]  # Fallback to basic preset if not found
+    return Tower(pos, preset.get("range", 100), preset.get("damage", 10), preset.get("reload_time", 1.0),
+                     preset.get("explosive", False), preset.get("explosion_radius", 30))
+    

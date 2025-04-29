@@ -26,12 +26,12 @@ class Projectile:
 
         direction = (self.target.pos - self.pos)
         distance = direction.length()
-        if distance < self.speed:
+        if distance < self.speed * (pg.time.get_ticks() / 1000):
             self.finish(enemies_list)
             
         else:
             direction = direction.normalize()
-            self.pos += direction * self.speed
+            self.pos += direction * self.speed * (pg.time.get_ticks() / 1000)
 
 
     def draw(self, surface):
