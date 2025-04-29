@@ -14,9 +14,9 @@ import building.buildManager as bm
 # Main game loop
 def main():
     screen, clock = initialize_game()
-    map_img, button_img, waypoints = load_assets()
+    map_img, button_img, waypoints, building_buttons, building_blueprints = load_assets()
 
-    test_button = Button(con.SCREEN_WIDTH - 200, 120, button_img, True)
+    #test_button = Button(con.SCREEN_WIDTH - 200, 120, button_img, True)
     base = dummyEntity((900, 900))
 
     projectiles = []
@@ -26,28 +26,40 @@ def main():
     wave_cooldown = 0
     enemy_spawn_index = 0
     enemies_list = []
-    spawned_towers = []
+    mode = "Playing"
+    selected_blueprint = None
+    resources_manager = ResourcesManager()
+    road_seg = bm.generate_road_segments(waypoints)
 
     run = True
+
     while run:
         clock_tick = clock.tick(con.FPS)
         screen.fill("black")
         screen.blit(map_img, (0, 0))
 
         draw_waypoints(screen, waypoints)
+        resources_manager.draw_resources(screen)
 
+        # if test_button.draw(screen):
+        #     print("Test button pressed")
+        bm.update_factories(clock_tick, resources_manager)
+        bm.draw_factories(screen)
 
-        if test_button.draw(screen):
-            print("Test button pressed")
-        run = handle_events(spawned_towers)
-
+        for idx, btn in enumerate(building_buttons):
+            if btn.draw(screen):
+                selected_blueprint = building_blueprints[idx]
+                mode = "Building"
+        run, selected_blueprint = handle_events(bm.towers, selected_blueprint, resources_manager, road_seg)
+        if mode == "Building" and selected_blueprint:
+            selected_blueprint.draw_ghost(screen, resources_manager, road_seg)
         current_wave, wave_cooldown, enemy_spawn_index = handle_waves(
             clock_tick, waves, current_wave, wave_cooldown, enemy_spawn_index, enemies_list
         )
 
-        update_enemies(clock_tick, enemies_list, base, screen)
-        update_towers(clock_tick, spawned_towers, enemies_list, waypoints, screen, projectiles)
-        update_projectiles(clock_tick, projectiles,screen=screen)
+        update_enemies(clock_tick, enemies_list, base, screen, resources_manager)
+        update_towers(clock_tick, bm.towers, enemies_list, waypoints, screen, projectiles)
+        update_projectiles(clock_tick, projectiles,screen=screen,enemies_list=enemies_list)
         base.draw(screen)
         pg.display.update()
 
@@ -64,27 +76,38 @@ def load_assets():
     button_img = pg.image.load("button_template.png").convert_alpha()
     waypoints = load_lists_from_json("map1_waypoints.json")
     print("Waypoints loaded:", waypoints)
-    return map_img, button_img, waypoints
-
-    for idx, btn in enumerate(building_buttons):
-        if btn.draw(screen):
-            selected_blueprint = building_blueprints[idx]
-            mode = "Building"
-            print(f"Selected: {selected_blueprint.name}")
-
-def handle_events(spawned_towers):
+    factory_metal_img = pg.image.load("factory_metal_icon.png").convert_alpha()
+    factory_wood_img = pg.image.load("factory_wood_icon.png").convert_alpha()
+    tower_img = pg.image.load("button_template.png").convert_alpha()  # Tymczasowy obrazek dla wieży
+    building_blueprints = [
+        BuildingBlueprint("Metal Factory", factory_metal_img, {"gold": 50, "metal": 20}, 40, 40, bm.build_factory, resource="metal"),
+        BuildingBlueprint("Wood Factory", factory_wood_img, {"gold": 40, "wood": 10}, 40, 40, bm.build_factory, resource="wood"),
+        BuildingBlueprint("Basic Tower", tower_img, {"gold": 100, "wood": 50}, 40, 40, bm.build_tower, resource=None),
+    ]
+    building_buttons = []
+    for i, blueprint in enumerate(building_blueprints):
+        button = Button(con.SCREEN_WIDTH - 80, 50 + i * 80, blueprint.image)
+        building_buttons.append(button)
+    return map_img, button_img, waypoints, building_buttons, building_blueprints
+def handle_events(spawned_towers, selected_blueprint, resources_manager, road_seg):
     for event in pg.event.get():
         if event.type == pg.QUIT:
-            return False
-        elif event.type == pg.MOUSEBUTTONDOWN and event.button == 1:  
+            return False, selected_blueprint
+
+        elif event.type == pg.MOUSEBUTTONDOWN and event.button == 1:
             keys = pg.key.get_pressed()
-            if keys[pg.K_LCTRL] or keys[pg.K_RCTRL]:  
-                mouse_pos = pg.mouse.get_pos()
-                new_tower = create_tower(mouse_pos, "basic")  
+            mouse_pos = pg.mouse.get_pos()
+            if keys[pg.K_LCTRL] or keys[pg.K_RCTRL]:
+                new_tower = create_tower(mouse_pos, "basic")
                 spawned_towers.append(new_tower)
-                
                 print(f"Created a Tower at {mouse_pos}")
-    return True
+            elif selected_blueprint:
+                import building.buildManager as bm
+                if bm.try_build(mouse_pos, selected_blueprint, resources_manager, road_seg):
+                    print(f"Built {selected_blueprint.name} at {mouse_pos}")
+                    selected_blueprint = None
+
+    return True, selected_blueprint
 
 
 def draw_waypoints(screen, waypoints):
@@ -107,7 +130,7 @@ def handle_waves(clock_tick, waves, current_wave, wave_cooldown, enemy_spawn_ind
     return current_wave, wave_cooldown, enemy_spawn_index
 
 
-def update_enemies(clock_tick, enemies_list, base, screen):
+def update_enemies(clock_tick, enemies_list, base, screen, resources_manager):
     for enemy in enemies_list[:]:
         enemy.draw(screen)
         distance_to_target = enemy.pos.distance_to(base.pos)
@@ -118,19 +141,21 @@ def update_enemies(clock_tick, enemies_list, base, screen):
             if enemy.attack_cooldown <= 0:
                 base.take_damage(enemy.damage)
                 enemy.attack_cooldown = enemy.attack_speed
-                    base.health = base.max_health  # Reset for now
+                base.health = base.max_health  # Reset for now
         if enemy.is_dead():
             enemies_list.remove(enemy)
+            resources_manager.add("gold", 50)
 def update_towers(clock_tick, towers: list[Tower], enemies_list, waypoints, screen, projectiles):
     for tower in towers:
         tower.attack(enemies_list, 1, waypoints, projectiles)
         tower.current_reload -= clock_tick / 1000
         tower.draw(screen)
-def update_projectiles(clock_tick, projectiles,screen):
+def update_projectiles(clock_tick, projectiles,screen, enemies_list):
     for projectile in projectiles[:]:
-        projectile.update()
+        projectile.update(enemies_list)
         if not projectile.active:
             projectiles.remove(projectile)
         projectile.draw(screen)
+
 if __name__ == "__main__":
     main()
