@@ -58,17 +58,25 @@ def handle_events(spawned_towers):
         if event.type == pg.QUIT:
             return False
         elif event.type == pg.MOUSEBUTTONDOWN and event.button == 1:
-            handle_tower_creation(spawned_towers)
+            keys = pg.key.get_pressed()
+            if keys[pg.K_1]:
+                handle_tower_creation(spawned_towers, preset="basic")
+            elif keys[pg.K_2]:
+                handle_tower_creation(spawned_towers, preset="sniper")
+            elif keys[pg.K_3]:
+                handle_tower_creation(spawned_towers, preset="cannon")
+            else:
+                handle_tower_creation(spawned_towers, preset="basic")
     return True
 
 
-def handle_tower_creation(spawned_towers):
+def handle_tower_creation(spawned_towers,preset = "basic"):
     keys = pg.key.get_pressed()
-    if keys[pg.K_LCTRL] or keys[pg.K_RCTRL]:
-        mouse_pos = pg.mouse.get_pos()
-        new_tower = create_tower(mouse_pos, "basic")
-        spawned_towers.append(new_tower)
-        print(f"Created a Tower at {mouse_pos}")
+    
+    mouse_pos = pg.mouse.get_pos()
+    new_tower = create_tower(mouse_pos, preset)
+    spawned_towers.append(new_tower)
+    print(f"Created a Tower at {mouse_pos}")
 
 
 def draw_waypoints(screen, waypoints):
@@ -126,7 +134,7 @@ def update_towers(clock_tick, towers, enemies_list, waypoints, screen, projectil
 
 def update_projectiles(clock_tick, projectiles, screen):
     for projectile in projectiles[:]:
-        projectile.update()
+        projectile.update(clock_tick)
         if not projectile.active:
             projectiles.remove(projectile)
         projectile.draw(screen)

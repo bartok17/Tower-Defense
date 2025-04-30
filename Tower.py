@@ -64,7 +64,7 @@ TOWER_PRESETS = {
     "basic":    TowerStats(range=100, damage=10, reload_time=1.0, explosive=False),
     "sniper":   TowerStats(range=200, damage=30, reload_time=2.5, explosive=False),
     "rapid":    TowerStats(range=80,  damage=5,  reload_time=0.3, explosive=False),
-    "cannon":   TowerStats(range=120, damage=20, reload_time=1.5, explosive=True, explosion_radius=30),
+    "cannon":   TowerStats(range=120, damage=20, reload_time=1.5, explosive=True, explosion_radius=60),
 }
 
 

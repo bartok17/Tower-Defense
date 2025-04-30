@@ -19,19 +19,19 @@ class Projectile:
         else:
             self.target.take_damage(self.damage)
         self.active = False
-    def update(self, enemies_list=None):
+    def update(self, clock_Tick , enemies_list=None):
         if not self.active or self.target.is_dead():
             self.active = False
             return
 
         direction = (self.target.pos - self.pos)
         distance = direction.length()
-        if distance < self.speed * (pg.time.get_ticks() / 1000):
+        if distance < self.speed * clock_Tick :
             self.finish(enemies_list)
             
         else:
             direction = direction.normalize()
-            self.pos += direction * self.speed * (pg.time.get_ticks() / 1000)
+            self.pos += direction * self.speed *clock_Tick 
 
 
     def draw(self, surface):
