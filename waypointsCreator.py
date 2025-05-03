@@ -2,7 +2,6 @@ import json
 import pygame as pg
 import constants as con
 
-
 '''here you can create waypoint dictionaries
 just create lists and use save_lists_to_json() to save'''
 
@@ -13,7 +12,6 @@ def save_lists_to_json(filename, **lists):
 def load_lists_from_json(filename):
     with open(filename, 'r') as f:
         return json.load(f)
-
 
 if __name__ == "__main__":
     mapName = "map1"
@@ -45,11 +43,11 @@ if __name__ == "__main__":
             elif event.type == pg.MOUSEBUTTONDOWN:
                 pos = pg.mouse.get_pos()
                 last_point = current_road[-1] if current_road else None
-                if(last_point):
-                    if (abs(pos[0] - last_point[0])< 10):
-                        print(str( abs(pos[0] - last_point[0])))
+                if last_point:
+                    if abs(pos[0] - last_point[0]) < 10:
+                        print(str(abs(pos[0] - last_point[0])))
                         pos = (last_point[0], pos[1])
-                    if (abs(pos[1] - last_point[1] )< 10):
+                    if abs(pos[1] - last_point[1]) < 10:
                         pos = (pos[0], last_point[1])
                     if pos[0] < 10:
                         pos = (0, pos[1])
@@ -59,8 +57,7 @@ if __name__ == "__main__":
                         pos = (pos[0], 0)
                     elif pos[1] > con.SCREEN_HEIGHT - 10:
                         pos = (pos[0], con.SCREEN_HEIGHT)
-
-                    if(abs(pos[0] - last_point[0]) < 10 and abs(pos[1] - last_point[1]) < 10):
+                    if abs(pos[0] - last_point[0]) < 10 and abs(pos[1] - last_point[1]) < 10:
                         continue
                 current_road.append(pos)
                 print(f"Added point: {pos}")

@@ -28,8 +28,6 @@ class Enemy:
         self.color = tuple(template.get("color", [255, 255, 255]))
         self.radius = template.get("radius", 10)
 
-
-
     def update(self):
         if self.curr_waypoint + 1 < len(self.waypoints):
             next_target = pg.Vector2(self.waypoints[self.curr_waypoint + 1])
@@ -59,3 +57,6 @@ class Enemy:
             total_distance += current_position.distance_to(next_waypoint)
             current_position = next_waypoint
         return total_distance
+
+    def has_finished(self):
+        return self.curr_waypoint >= len(self.waypoints) - 1 
