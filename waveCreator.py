@@ -2,6 +2,9 @@
 import pygame as pg
 import json
 import os
+import constants as con
+
+os.makedirs(con.DATA_DIR, exist_ok=True)
 
 pg.init()
 screen = pg.display.set_mode((1000, 700))
@@ -14,12 +17,12 @@ template = {
     "units": [],
     "mode": 1
 }
-with open("enemyTemplates.json", "r") as f:
+with open(os.path.join(con.DATA_DIR, "enemyTemplates.json"), "r") as f:
     enemy_templates = json.load(f)
 available_units = [{"unit_id": int(k), "number": 1} for k in enemy_templates.keys()]
 selected_idx = 0
 
-template_path = "Waves.json"
+template_path = os.path.join(con.DATA_DIR, "Waves.json")
 if os.path.exists(template_path):
     with open(template_path, "r") as f:
         templates = json.load(f)
@@ -58,8 +61,7 @@ while running:
     draw_interface()
 
     for event in pg.event.get():
-        if event.type == pg.QUIT:
-            running = False
+        if event.type == pg.QUIT: running = False
         elif event.type == pg.KEYDOWN:
             if event.key == pg.K_ESCAPE:
                 running = False

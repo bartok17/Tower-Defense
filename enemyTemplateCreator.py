@@ -1,6 +1,7 @@
 import pygame as pg
 import json
 import os
+import constants as con
 
 pg.init()
 screen = pg.display.set_mode((640, 480))
@@ -24,7 +25,7 @@ template = {
 abilities_list = ["magic_resistant", "ranged", "boss", "fast", "slow", "healer", "tank", "summoner", "invisible"]
 selected_ability_index = 0
 
-template_path = "enemyTemplates.json"
+template_path = os.path.join(con.DATA_DIR, "enemyTemplates.json")
 if os.path.exists(template_path):
     with open(template_path, "r") as f:
         templates = json.load(f)

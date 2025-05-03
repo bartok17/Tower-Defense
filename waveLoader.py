@@ -1,6 +1,11 @@
 import json
 from random import choice
 from enemy.enemy import Enemy
+import os
+import constants as con
+
+waves_path = os.path.join(con.DATA_DIR, "waves.json")
+template_path = os.path.join(con.DATA_DIR, "enemyTemplates.json")
 
 def load_enemy_templates(template_path):
     with open(template_path, "r") as f:

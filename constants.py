@@ -6,3 +6,7 @@ FPS = 60
 
 WHITE = (255, 255, 255)
 RED = (255, 0, 0)
+
+
+DATA_DIR = "data"
+ASSETS_DIR = "assets"
