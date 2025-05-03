@@ -51,3 +51,11 @@ class Enemy:
     def is_dead(self):
         return self.health <= 0
     
+    def distance_to_end(self):
+        total_distance = 0
+        current_position = self.pos
+        for i in range(self.curr_waypoint + 1, len(self.waypoints)):
+            next_waypoint = pg.Vector2(self.waypoints[i])
+            total_distance += current_position.distance_to(next_waypoint)
+            current_position = next_waypoint
+        return total_distance
