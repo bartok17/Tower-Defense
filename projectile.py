@@ -38,5 +38,4 @@ class Projectile:
         if self.active:
             pg.draw.circle(surface, (255, 255, 0), (int(self.pos.x), int(self.pos.y)), 5)
         elif self.explosive:
-            # Draw explosion effect (optional)
             pg.draw.circle(surface, (255, 100, 0), (int(self.pos.x), int(self.pos.y)), self.explosion_radius, 2)

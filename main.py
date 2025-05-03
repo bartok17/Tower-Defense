@@ -65,8 +65,16 @@ def handle_events(spawned_towers):
                 handle_tower_creation(spawned_towers, preset="sniper")
             elif keys[pg.K_3]:
                 handle_tower_creation(spawned_towers, preset="cannon")
+            elif keys[pg.K_4]:
+                handle_tower_creation(spawned_towers, preset="flame")
             else:
                 handle_tower_creation(spawned_towers, preset="basic")
+
+        elif event.type == pg.KEYDOWN:
+            if event.key == pg.K_u:
+                for tower in spawned_towers:
+                    tower.upgrade(range_increase=10, damage_increase=5, reload_time_decrease=0.1)
+
     return True
 
 
