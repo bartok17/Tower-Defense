@@ -25,6 +25,7 @@ class Projectile:
             self.active = False
             return
 
+        
         direction = (self.target.pos - self.pos)
         distance = direction.length()
         if distance < self.speed * clock_Tick:

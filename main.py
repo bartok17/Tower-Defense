@@ -7,8 +7,10 @@ from Tower import Tower, create_tower
 from dummyEntity import dummyEntity
 from economy import ResourcesManager
 from building import BuildingBlueprint
+from typing import List
+from projectile import Projectile
 import building.buildManager as bm
-
+1
 # Main game loop
 def main():
     screen, clock = initialize_game()
@@ -147,9 +149,9 @@ def update_towers(clock_tick, towers, enemies_list, waypoints, screen, projectil
         tower.current_reload -= clock_tick / 1000
         tower.draw(screen)
 
-def update_projectiles(clock_tick, projectiles, screen, enemies_list):
+def update_projectiles(clock_tick: int, projectiles: List[Projectile], screen: pg.Surface, enemies_list: list):
     for projectile in projectiles[:]:
-        projectile.update(enemies_list)
+        projectile.update(clock_tick,enemies_list)
         if not projectile.active:
             projectiles.remove(projectile)
         projectile.draw(screen)
