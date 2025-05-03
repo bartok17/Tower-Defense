@@ -15,7 +15,7 @@ def load_all_waves(waves_path, template_path, waypoints):
     waves_data = load_waves(waves_path)
     all_waves = []
 
-    for wave in waves_data:
+    for wave in waves_data.values():
         enemies = []
         unit_list = wave["units"]
         p_time = wave["P_time"]
@@ -35,3 +35,28 @@ def load_all_waves(waves_path, template_path, waypoints):
         })
 
     return all_waves
+
+def load_wave_by_id(waves_path, template_path, wave_id, waypoints):
+    templates = load_enemy_templates(template_path)
+    waves_data = load_waves(waves_path)
+
+    wave = waves_data.get(str(wave_id))
+    if not wave: return None
+    enemies = []
+    unit_list = wave["units"]
+    p_time = wave["P_time"]
+    mode = wave.get("mode", 0)
+
+    for enemy_id, count in unit_list:
+        str_id = str(enemy_id)
+        template = dict(templates.get(str_id))
+        template["id"] = enemy_id
+        for _ in range(count):
+            enemy = Enemy(waypoints[choice(list(waypoints.keys()))], template)
+            enemies.append(enemy)
+
+    return {
+        "P_time": p_time,
+        "mode": mode,
+        "enemies": enemies
+    }

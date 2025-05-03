@@ -6,7 +6,7 @@ from Button import Button
 from Tower import Tower, TowerStats,create_tower
 from dummyEntity import dummyEntity
 from economy import ResourcesManager
-from building.buildingBlueprint import BuildingBlueprint
+from building import BuildingBlueprint
 import building.buildManager as bm 
 
 
@@ -17,7 +17,7 @@ def main():
     map_img, button_img, waypoints, building_buttons, building_blueprints = load_assets()
 
     #test_button = Button(con.SCREEN_WIDTH - 200, 120, button_img, True)
-    base = dummyEntity((900, 900))
+    base = dummyEntity((0, 0))
 
     projectiles = []
 
@@ -60,7 +60,9 @@ def main():
         update_enemies(clock_tick, enemies_list, base, screen, resources_manager)
         update_towers(clock_tick, bm.towers, enemies_list, waypoints, screen, projectiles)
         update_projectiles(clock_tick, projectiles,screen=screen,enemies_list=enemies_list)
-        base.draw(screen)
+        if(resources_manager.get_resource("health") <= 0):
+            print("Game Over")
+            run = False
         pg.display.update()
 
 def initialize_game():
@@ -102,7 +104,6 @@ def handle_events(spawned_towers, selected_blueprint, resources_manager, road_se
                 spawned_towers.append(new_tower)
                 print(f"Created a Tower at {mouse_pos}")
             elif selected_blueprint:
-                import building.buildManager as bm
                 if bm.try_build(mouse_pos, selected_blueprint, resources_manager, road_seg):
                     print(f"Built {selected_blueprint.name} at {mouse_pos}")
                     selected_blueprint = None
@@ -136,6 +137,10 @@ def update_enemies(clock_tick, enemies_list, base, screen, resources_manager):
         distance_to_target = enemy.pos.distance_to(base.pos)
         if distance_to_target > enemy.attack_range:
             enemy.update()
+            if enemy.has_finished(): 
+                print("Enemy reached the base!")
+                resources_manager.spend({"health": 10})
+                enemies_list.remove(enemy)
         else:
             enemy.attack_cooldown -= clock_tick / 1000
             if enemy.attack_cooldown <= 0:
@@ -145,6 +150,7 @@ def update_enemies(clock_tick, enemies_list, base, screen, resources_manager):
         if enemy.is_dead():
             enemies_list.remove(enemy)
             resources_manager.add("gold", 50)
+        
 def update_towers(clock_tick, towers: list[Tower], enemies_list, waypoints, screen, projectiles):
     for tower in towers:
         tower.attack(enemies_list, 1, waypoints, projectiles)

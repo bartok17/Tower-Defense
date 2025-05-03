@@ -59,3 +59,5 @@ class Enemy:
             total_distance += current_position.distance_to(next_waypoint)
             current_position = next_waypoint
         return total_distance
+    def has_finished(self):
+        return self.curr_waypoint >= len(self.waypoints) - 1 

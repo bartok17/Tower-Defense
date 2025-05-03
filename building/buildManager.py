@@ -24,55 +24,53 @@ def build_tower(position, blueprint, resource_manager):
         building_rects.append(pg.Rect(position[0], position[1], blueprint.width, blueprint.height))
         return True
     return False
-def can_build_at(position, blueprint, resource_manager, road_segments, road_thickness=20):
+def can_build_at(position, blueprint, resource_manager, road, road_thickness=100):
     candidate = pg.Rect(position[0], position[1], blueprint.width, blueprint.height)
     for rect in building_rects:
         if candidate.colliderect(rect): return False
-    for (start, end) in road_segments:
+    for (start, end) in road:
         dist = point_to_segment_distance(candidate[0], candidate[1], start[0], start[1], end[0], end[1], )
         if dist < road_thickness // 2:
             return False
     if not resource_manager.can_afford(blueprint.cost): return False
     return True
 
-def try_build(position, blueprint, resource_manager, road_rects):
-    if can_build_at(position, blueprint, resource_manager, road_rects):
+def try_build(position, blueprint, resource_manager, road):
+    if can_build_at(position, blueprint, resource_manager, road):
         if blueprint.function(position, blueprint, resource_manager):
             candidate = pg.Rect(position[0], position[1], blueprint.width, blueprint.height)
             building_rects.append(candidate)
-            print(f"Built {blueprint.name} at {position}")
             return True
     return False
 
 def generate_road_segments(waypoints):
-    road_segments = []
+    road = []
     for name, points in waypoints.items():
         for i in range(len(points) - 1):
             start = points[i]
             end = points[i + 1]
-            road_segments.append((start, end))
-    return road_segments
+            road.append((start, end))
+    return road
 
 def point_to_segment_distance(px, py, x1, y1, x2, y2):
-    line_mag = ((x2 - x1)**2 + (y2 - y1)**2) ** 0.5
-    if line_mag == 0:
-        return ((px - x1)**2 + (py - y1)**2) ** 0.5
+    p = pg.Vector2(px, py)
+    a = pg.Vector2(x1, y1)
+    b = pg.Vector2(x2, y2)
 
-    u = ((px - x1)*(x2 - x1) + (py - y1)*(y2 - y1)) / (line_mag**2)
+    ab = b - a
+    ap = p - a
+    ab_len_sq = ab.length_squared()
 
+    if ab_len_sq == 0:
+        return p.distance_to(a)
+    u = ap.dot(ab) / ab_len_sq
     if u < 0:
-        closest_x = x1
-        closest_y = y1
+        closest = a
     elif u > 1:
-        closest_x = x2
-        closest_y = y2
+        closest = b
     else:
-        closest_x = x1 + u * (x2 - x1)
-        closest_y = y1 + u * (y2 - y1)
-
-    dx = px - closest_x
-    dy = py - closest_y
-    return (dx**2 + dy**2) ** 0.5
+        closest = a + u * ab
+    return p.distance_to(closest)
 
 def draw_factories(screen):
     for factory in factories:

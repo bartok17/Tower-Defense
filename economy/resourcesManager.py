@@ -2,6 +2,7 @@ import pygame as pg
 class ResourcesManager:
     def __init__(self):
         self.resources = {
+            "health": 100,
             "gold": 300,
             "wood": 330,
             "metal": 330
