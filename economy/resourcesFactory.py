@@ -1,4 +1,6 @@
 import pygame as pg
+import os
+import constants as con
 
 class Factory:
     def __init__(self, pos, resource_type, production_rate, interval):
@@ -16,7 +18,7 @@ class Factory:
 
     def draw(self, screen):
         if self.resource_type == "wood":
-            factory_image = pg.image.load("factory_wood_icon.png").convert_alpha()
+            factory_image = pg.image.load(os.path.join(con.ASSETS_DIR, "factory_wood_icon.png")).convert_alpha()
         elif self.resource_type == "metal":
-            factory_image = pg.image.load("factory_metal_icon.png").convert_alpha()
+            factory_image = pg.image.load(os.path.join(con.ASSETS_DIR, "factory_metal_icon.png")).convert_alpha()
         screen.blit(factory_image, (self.pos[0], self.pos[1]))
