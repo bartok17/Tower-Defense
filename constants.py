@@ -7,6 +7,11 @@ FPS = 60
 WHITE = (255, 255, 255)
 RED = (255, 0, 0)
 
-
 DATA_DIR = "data"
 ASSETS_DIR = "assets"
+
+STATE_PLAYING = "Playing"
+STATE_BUILDING = "Building"
+STATE_GAME_OVER = "GameOver"
+STATE_MENU = "Menu"
+STATE_PAUSED = "Paused"

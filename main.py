@@ -16,7 +16,7 @@ import os
 def main():
     screen, clock = initialize_game()
     map_img, button_img, waypoints, building_buttons, building_blueprints = load_assets()
-
+    mode = con.STATE_PLAYING
     base = dummyEntity((0, 0))
     projectiles = []
     waves = wl.load_all_waves(os.path.join(con.DATA_DIR, "waves.json"),os.path.join(con.DATA_DIR, "enemyTemplates.json") , waypoints)
@@ -24,7 +24,6 @@ def main():
     wave_cooldown = 0
     enemy_spawn_index = 0
     enemies_list = []
-    mode = "Playing"
     selected_blueprint = None
     resources_manager = ResourcesManager()
     road_seg = bm.generate_road_segments(waypoints)
@@ -39,28 +38,39 @@ def main():
         draw_waypoints(screen, waypoints)
         resources_manager.draw_resources(screen)
 
-        bm.update_factories(clock_tick, resources_manager)
-        bm.draw_factories(screen)
-
-        for idx, btn in enumerate(building_buttons):
-            if btn.draw(screen):
-                selected_blueprint = building_blueprints[idx]
-                mode = "Building"
-        run, selected_blueprint = handle_events(bm.towers, selected_blueprint, resources_manager, road_seg)
-        if mode == "Building" and selected_blueprint:
+        run, selected_blueprint, mode = handle_events(
+            bm.towers,
+            selected_blueprint,
+            resources_manager,
+            road_seg,
+            mode
+        )
+        if mode in (con.STATE_PLAYING, con.STATE_BUILDING):
+            for idx, btn in enumerate(building_buttons):
+                if btn.draw(screen):
+                    selected_blueprint = building_blueprints[idx]
+                    mode = con.STATE_BUILDING
+        if mode == con.STATE_BUILDING and selected_blueprint:
             selected_blueprint.draw_ghost(screen, resources_manager, road_seg)
-
+        
         current_wave, wave_cooldown, enemy_spawn_index = handle_waves(
             clock_tick, waves, current_wave, wave_cooldown, enemy_spawn_index, enemies_list
         )
-
-        update_enemies(clock_tick, enemies_list, base, screen, resources_manager)
-        update_towers(clock_tick, bm.towers, enemies_list, waypoints, screen, projectiles)
-        update_projectiles(clock_tick, projectiles, screen, enemies_list)
+        update_game(
+            clock_tick,
+            resources_manager,
+            screen,
+            enemies_list,
+            base,
+            waypoints,
+            projectiles,
+            mode
+        )
         if resources_manager.get_resource("health") <= 0:
-            print("Game Over")
-            run = False
+            mode = con.STATE_GAME_OVER
+        texts(mode, screen)
         pg.display.update()
+
 
 def initialize_game():
     pg.init()
@@ -112,25 +122,58 @@ def load_assets():
 
     return map_img, button_img, waypoints, building_buttons, building_blueprints
 
-
-def handle_events(spawned_towers, selected_blueprint, resources_manager, road_seg):
+def texts(mode, screen):
+    match mode:
+        case con.STATE_MENU:
+            font = pg.font.SysFont(None, 80)
+            text = font.render("Press ENTER to Start", True, (255, 255, 255))
+            text_rect = text.get_rect(center=(con.SCREEN_WIDTH // 2, con.SCREEN_HEIGHT // 2))
+            screen.blit(text, text_rect)
+        case con.STATE_PAUSED:
+            font = pg.font.SysFont(None, 100)
+            text = font.render("PAUSED", True, (255, 255, 0))
+            text_rect = text.get_rect(center=(con.SCREEN_WIDTH // 2, con.SCREEN_HEIGHT // 2))
+            screen.blit(text, text_rect)
+        case con.STATE_GAME_OVER:
+            font = pg.font.SysFont(None, 100)
+            text = font.render("GAME OVER", True, (255, 0, 0))
+            text_rect = text.get_rect(center=(con.SCREEN_WIDTH // 2, con.SCREEN_HEIGHT // 2))
+            screen.blit(text, text_rect)
+def handle_events(spawned_towers, selected_blueprint, resources_manager, road_seg, mode):
     for event in pg.event.get():
         if event.type == pg.QUIT:
-            return False, selected_blueprint
+            return False, selected_blueprint, mode
 
-        elif event.type == pg.MOUSEBUTTONDOWN and event.button == 1:
-            keys = pg.key.get_pressed()
-            mouse_pos = pg.mouse.get_pos()
-            if keys[pg.K_LCTRL] or keys[pg.K_RCTRL]:
-                new_tower = create_tower(mouse_pos, "basic")
-                spawned_towers.append(new_tower)
-                print(f"Created a Tower at {mouse_pos}")
-            elif selected_blueprint:
-                if bm.try_build(mouse_pos, selected_blueprint, resources_manager, road_seg):
-                    print(f"Built {selected_blueprint.name} at {mouse_pos}")
-                    selected_blueprint = None
+        if event.type == pg.KEYDOWN:
+            match mode: 
+                case con.STATE_MENU:
+                    if event.key == pg.K_RETURN:
+                        print("Starting game!")
+                        mode = con.STATE_PLAYING
+                case con.STATE_PAUSED:
+                    if event.key == pg.K_p:
+                        print("Unpaused!")
+                        mode = con.STATE_PLAYING
+                case con.STATE_PLAYING | con.STATE_BUILDING:
+                    if event.key == pg.K_p:
+                        print("Paused!")
+                        mode = con.STATE_PAUSED
 
-    return True, selected_blueprint
+        if mode in (con.STATE_PLAYING, con.STATE_BUILDING):
+            if event.type == pg.MOUSEBUTTONDOWN and event.button == 1:
+                keys = pg.key.get_pressed()
+                mouse_pos = pg.mouse.get_pos()
+                if keys[pg.K_LCTRL] or keys[pg.K_RCTRL]:
+                    new_tower = create_tower(mouse_pos, "basic")
+                    spawned_towers.append(new_tower)
+                    print(f"Created a Tower at {mouse_pos}")
+                elif selected_blueprint:
+                    if bm.try_build(mouse_pos, selected_blueprint, resources_manager, road_seg):
+                        print(f"Built {selected_blueprint.name} at {mouse_pos}")
+                        selected_blueprint = None
+
+    return True, selected_blueprint, mode
+
 
 def draw_waypoints(screen, waypoints):
     for name, road in waypoints.items():
@@ -181,6 +224,13 @@ def update_projectiles(clock_tick: int, projectiles: List[Projectile], screen: p
         if not projectile.active:
             projectiles.remove(projectile)
         projectile.draw(screen)
+def update_game(clock_tick, resources_manager, screen, enemies_list, base, waypoints, projectiles, mode):
+    if mode in (con.STATE_PLAYING, con.STATE_BUILDING):
+        bm.update_factories(clock_tick, resources_manager)
+        bm.draw_factories(screen)
+        update_enemies(clock_tick, enemies_list, base, screen, resources_manager)
+        update_towers(clock_tick, bm.towers, enemies_list, waypoints, screen, projectiles)
+        update_projectiles(clock_tick, projectiles, screen, enemies_list)
 
 if __name__ == "__main__":
     main()
