@@ -19,7 +19,7 @@ def build_tower(position, blueprint, resource_manager):
     cost = blueprint.cost
     if resource_manager.can_afford(cost):
         resource_manager.spend(cost)
-        new_tower = create_tower(position, "basic")  # na razie tylko ten typ
+        new_tower = create_tower(position, blueprint.name.lstrip("Tower - "))  
         towers.append(new_tower)
         building_rects.append(pg.Rect(position[0], position[1], blueprint.width, blueprint.height))
         return True

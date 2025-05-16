@@ -1,7 +1,7 @@
 import pygame as pg
 
 class BuildingBlueprint:
-    def __init__(self, name, image, cost, width, height, function, resource):
+    def __init__(self, name, image, cost, width, height, function, resource=None):
         self.name = name
         self.image = image
         self.cost = cost

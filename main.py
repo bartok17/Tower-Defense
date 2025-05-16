@@ -19,7 +19,7 @@ def main():
 
     base = dummyEntity((0, 0))
     projectiles = []
-    waves = wl.load_all_waves("waves.json", "enemyTemplates.json", waypoints)
+    waves = wl.load_all_waves(os.path.join(con.DATA_DIR, "waves.json"),os.path.join(con.DATA_DIR, "enemyTemplates.json") , waypoints)
     current_wave = 0
     wave_cooldown = 0
     enemy_spawn_index = 0
@@ -93,24 +93,46 @@ def initialize_game():
     clock = pg.time.Clock()
     return screen, clock
 
+import os
+
 def load_assets():
-    map_img = pg.image.load("map1.png").convert_alpha()
-    button_img = pg.image.load("button_template.png").convert_alpha()
-    waypoints = load_lists_from_json("map1_waypoints.json")
+    os.makedirs(con.DATA_DIR, exist_ok=True)
+    os.makedirs(con.ASSETS_DIR, exist_ok=True)
+
+    # ASSETS
+    map_img = pg.image.load(os.path.join(con.ASSETS_DIR, "map1.png")).convert_alpha()
+    button_img = pg.image.load(os.path.join(con.ASSETS_DIR, "button_template.png")).convert_alpha()
+
+    factory_metal_img = pg.image.load(os.path.join(con.ASSETS_DIR, "factory_metal_icon.png")).convert_alpha()
+    factory_wood_img = pg.image.load(os.path.join(con.ASSETS_DIR, "factory_wood_icon.png")).convert_alpha()
+
+    tower_basic_img = pg.image.load(os.path.join(con.ASSETS_DIR, "tower_basic_icon.png")).convert_alpha() 
+    tower_cannon_img = pg.image.load(os.path.join(con.ASSETS_DIR, "tower_cannon_icon.png")).convert_alpha()
+    tower_flame_img = pg.image.load(os.path.join(con.ASSETS_DIR, "tower_flame_icon.png")).convert_alpha()
+    tower_rapid_img = pg.image.load(os.path.join(con.ASSETS_DIR, "tower_rapid_icon.png")).convert_alpha()
+    tower_sniper_img = pg.image.load(os.path.join(con.ASSETS_DIR, "tower_sniper_icon.png")).convert_alpha()
+
+    # DATA
+    waypoints_path = os.path.join(con.DATA_DIR, "map1_waypoints.json")
+    waypoints = load_lists_from_json(waypoints_path)
     print("Waypoints loaded:", waypoints)
-    factory_metal_img = pg.image.load("factory_metal_icon.png").convert_alpha()
-    factory_wood_img = pg.image.load("factory_wood_icon.png").convert_alpha()
-    tower_img = pg.image.load("button_template.png").convert_alpha()  # Tymczasowy obrazek dla wieży
+
+    # BLUEPRINTS
     building_blueprints = [
         BuildingBlueprint("Metal Factory", factory_metal_img, {"gold": 50, "metal": 20}, 40, 40, bm.build_factory, resource="metal"),
         BuildingBlueprint("Wood Factory", factory_wood_img, {"gold": 40, "wood": 10}, 40, 40, bm.build_factory, resource="wood"),
-        BuildingBlueprint("Basic Tower", tower_img, {"gold": 100, "wood": 50}, 40, 40, bm.build_tower, resource=None),
+        BuildingBlueprint("Tower - basic", tower_basic_img, {"gold": 100, "wood": 50}, 40, 40, bm.build_tower),
+        BuildingBlueprint("Tower - cannon", tower_cannon_img, {"gold": 150, "wood": 70}, 40, 40, bm.build_tower),
+        BuildingBlueprint("Tower - flame", tower_flame_img, {"gold": 120, "wood": 60}, 40, 40, bm.build_tower),
+        BuildingBlueprint("Tower - rapid", tower_rapid_img, {"gold": 80, "wood": 40}, 40, 40, bm.build_tower),
+        BuildingBlueprint("Tower - sniper", tower_sniper_img, {"gold": 200, "wood": 100}, 40, 40, bm.build_tower),
     ]
     building_buttons = []
     for i, blueprint in enumerate(building_blueprints):
         button = Button(con.SCREEN_WIDTH - 80, 50 + i * 80, blueprint.image, width=blueprint.width, height=blueprint.height)
         building_buttons.append(button)
     return map_img, button_img, waypoints, building_buttons, building_blueprints
+
 
 def handle_events(spawned_towers, selected_blueprint, resources_manager, road_seg):
     for event in pg.event.get():

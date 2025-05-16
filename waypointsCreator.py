@@ -1,11 +1,16 @@
 import json
 import pygame as pg
 import constants as con
+import os
 
 '''here you can create waypoint dictionaries
 just create lists and use save_lists_to_json() to save'''
 
+os.makedirs(con.DATA_DIR, exist_ok=True)
+
+
 def save_lists_to_json(filename, **lists):
+    
     with open(filename, 'w') as f:
         json.dump(lists, f)
 
@@ -26,11 +31,13 @@ if __name__ == "__main__":
 
     current_road = []
     all_roads = []
+    map_img_path = os.path.join(con.ASSETS_DIR, mapName + ".png")
+    map_img = pg.image.load(map_img_path).convert_alpha()
 
-    map_img = pg.image.load(mapName + ".png").convert_alpha()
-
+    save_path = os.path.join(con.DATA_DIR, mapName + "_waypoints.json")
+    
     try:
-        loaded_lists = load_lists_from_json(mapName + "_waypoints.json")
+        loaded_lists = load_lists_from_json(save_path)
         all_roads = [loaded_lists[key] for key in sorted(loaded_lists.keys())]
     except FileNotFoundError:
         print(f"No existing waypoints file found for {mapName}. Starting fresh.")
@@ -77,7 +84,7 @@ if __name__ == "__main__":
                         current_road = []
                 elif event.key == pg.K_s:
                     road_dict = {f"road{i+1}": road for i, road in enumerate(all_roads)}
-                    save_lists_to_json(mapName + "_waypoints.json", **road_dict)
+                    save_lists_to_json(save_path, **road_dict)
                     print("Waypoints saved.")
 
         screen.fill(con.WHITE)
@@ -96,5 +103,5 @@ if __name__ == "__main__":
 
     pg.quit()
 
-    loaded_lists = load_lists_from_json(mapName + "_waypoints.json")
+    loaded_lists = load_lists_from_json(save_path)
     print(loaded_lists)
