@@ -10,7 +10,8 @@ from building import BuildingBlueprint
 from typing import List
 from projectile import Projectile
 import building.buildManager as bm
-1
+from endingScreen import EndingScreen  
+
 # Main game loop
 def main():
     screen, clock = initialize_game()
@@ -23,14 +24,14 @@ def main():
     wave_cooldown = 0
     enemy_spawn_index = 0
     enemies_list = []
-    mode = "Playing"
+    mode = "Playing"  # Can be "Playing", "Building", "Paused", "GameOver"
     selected_blueprint = None
     resources_manager = ResourcesManager()
     road_seg = bm.generate_road_segments(waypoints)
 
-    run = True
+    game_state = "running"  # Initial game state
 
-    while run:
+    while game_state == "running":
         clock_tick = clock.tick(con.FPS)
         screen.fill("black")
         screen.blit(map_img, (0, 0))
@@ -45,7 +46,12 @@ def main():
             if btn.draw(screen):
                 selected_blueprint = building_blueprints[idx]
                 mode = "Building"
-        run, selected_blueprint = handle_events(bm.towers, selected_blueprint, resources_manager, road_seg)
+
+        game_state_from_events, selected_blueprint = handle_events(bm.towers, selected_blueprint, resources_manager, road_seg)
+        if game_state_from_events == "quit":
+            game_state = "quit"
+            break  
+
         if mode == "Building" and selected_blueprint:
             selected_blueprint.draw_ghost(screen, resources_manager, road_seg)
 
@@ -56,10 +62,29 @@ def main():
         update_enemies(clock_tick, enemies_list, base, screen, resources_manager)
         update_towers(clock_tick, bm.towers, enemies_list, waypoints, screen, projectiles)
         update_projectiles(clock_tick, projectiles, screen, enemies_list)
+
         if resources_manager.get_resource("health") <= 0:
             print("Game Over")
-            run = False
+            game_state = "game_over"  
+
         pg.display.update()
+
+    if game_state == "game_over":
+        end_screen = EndingScreen(screen, game_won=False)
+        end_screen_action = "running"
+        while end_screen_action == "running":
+            end_screen_action, _ = end_screen.handle_events()
+            end_screen.draw()
+            clock.tick(con.FPS) 
+
+        if end_screen_action == "play_again":
+            main()  
+        elif end_screen_action == "main_menu":
+            print("Main menu selected, quitting for now.")
+           
+
+    pg.quit()
+
 
 def initialize_game():
     pg.init()
@@ -83,14 +108,14 @@ def load_assets():
     ]
     building_buttons = []
     for i, blueprint in enumerate(building_blueprints):
-        button = Button(con.SCREEN_WIDTH - 80, 50 + i * 80, blueprint.image)
+        button = Button(con.SCREEN_WIDTH - 80, 50 + i * 80, blueprint.image, width=blueprint.width, height=blueprint.height)
         building_buttons.append(button)
     return map_img, button_img, waypoints, building_buttons, building_blueprints
 
 def handle_events(spawned_towers, selected_blueprint, resources_manager, road_seg):
     for event in pg.event.get():
         if event.type == pg.QUIT:
-            return False, selected_blueprint
+            return "quit", selected_blueprint  
 
         elif event.type == pg.MOUSEBUTTONDOWN and event.button == 1:
             keys = pg.key.get_pressed()
@@ -104,7 +129,7 @@ def handle_events(spawned_towers, selected_blueprint, resources_manager, road_se
                     print(f"Built {selected_blueprint.name} at {mouse_pos}")
                     selected_blueprint = None
 
-    return True, selected_blueprint
+    return "running", selected_blueprint  
 
 def draw_waypoints(screen, waypoints):
     for name, road in waypoints.items():
@@ -138,7 +163,7 @@ def update_enemies(clock_tick, enemies_list, base, screen, resources_manager):
             if enemy.attack_cooldown <= 0:
                 base.take_damage(enemy.damage)
                 enemy.attack_cooldown = enemy.attack_speed
-                base.health = base.max_health  # Reset for now
+                base.health = base.max_health  
         if enemy.is_dead():
             enemies_list.remove(enemy)
             resources_manager.add("gold", 50)
