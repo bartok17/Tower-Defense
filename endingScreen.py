@@ -1,6 +1,6 @@
 import pygame as pg
 import constants as con
-from Button import Button # Assuming Button class is in Button.py
+from Button import Button
 
 class EndingScreen:
     def __init__(self, screen, game_won=False):
@@ -13,16 +13,11 @@ class EndingScreen:
         button_height = 50
         button_y_start = con.SCREEN_HEIGHT // 2 + 50
 
-        # Placeholder button image (or use text rendering for buttons)
-        # For simplicity, we'll use text rendering if no image is provided
-        # If you have a button image, load it here:
-        # button_img = pg.image.load("path_to_your_button_image.png").convert_alpha()
-        # button_img = pg.transform.scale(button_img, (button_width, button_height))
-
+        # Use text rendering for buttons if no image is provided
         self.play_again_button = Button(
             con.SCREEN_WIDTH // 2 - button_width // 2,
             button_y_start,
-            None, # button_img
+            None,
             text="Play Again",
             text_color=(255, 255, 255),
             font_size=30,
@@ -33,7 +28,7 @@ class EndingScreen:
         self.main_menu_button = Button(
             con.SCREEN_WIDTH // 2 - button_width // 2,
             button_y_start + button_height + 20,
-            None, # button_img
+            None,
             text="Main Menu",
             text_color=(255, 255, 255),
             font_size=30,
@@ -43,7 +38,7 @@ class EndingScreen:
         )
 
     def draw(self):
-        self.screen.fill((30, 30, 30))  # Dark background
+        self.screen.fill((30, 30, 30))
 
         if self.game_won:
             title_text = self.font.render("You Won!", True, (0, 255, 0))
@@ -61,37 +56,23 @@ class EndingScreen:
     def handle_events(self):
         for event in pg.event.get():
             if event.type == pg.QUIT:
-                return "quit", None # Signal to quit the entire application
+                return "quit", None
             if event.type == pg.MOUSEBUTTONDOWN:
                 if self.play_again_button.is_clicked(pg.mouse.get_pos()):
                     print("Play Again button clicked (no functionality yet)")
-                    return "play_again", None # Placeholder action
+                    return "play_again", None
                 if self.main_menu_button.is_clicked(pg.mouse.get_pos()):
                     print("Main Menu button clicked (no functionality yet)")
-                    return "main_menu", None # Placeholder action
-        return "running", None # Continue showing the ending screen
+                    return "main_menu", None
+        return "running", None
 
-# Example usage (for testing purposes, not part of the class file)
+# Test usage
 if __name__ == '__main__':
     pg.init()
     screen = pg.display.set_mode((con.SCREEN_WIDTH, con.SCREEN_HEIGHT))
     pg.display.set_caption("Ending Screen Test")
     clock = pg.time.Clock()
 
-    # Assuming Button class is defined and works with text
-    # If Button requires an image, you'll need to provide one.
-    # For this example, Button class should be adaptable or a simple rect-based button.
-
-    # Test Game Over
-    # ending_screen_lose = EndingScreen(screen, game_won=False)
-    # current_screen_state = "running"
-    # while current_screen_state == "running":
-    #     current_screen_state, _ = ending_screen_lose.handle_events()
-    #     ending_screen_lose.draw()
-    #     clock.tick(30)
-    # print(f"Ending screen action: {current_screen_state}")
-
-    # Test Game Won
     ending_screen_win = EndingScreen(screen, game_won=True)
     current_screen_state = "running"
     while current_screen_state == "running":

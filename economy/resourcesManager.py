@@ -1,32 +1,43 @@
 import pygame as pg
+
 class ResourcesManager:
     def __init__(self):
         self.resources = {
-            "health": 100,
-            "gold": 300,
-            "wood": 330,
-            "metal": 330
+            "gold": 2000,
+            "metal": 500,
+            "wood": 500,
+            "health": 1000
         }
+        if pg.font.get_init():
+            self.font = pg.font.Font(None, 28)
+        else:
+            pg.font.init()
+            self.font = pg.font.Font(None, 28)
 
-    def add(self, resource, amount):
-        if resource in self.resources:
-            self.resources[resource] += amount
-    def spend(self, cost_dict):
-        if self.can_afford(cost_dict):
-            for res, amt in cost_dict.items():
-                self.resources[res] -= amt
+    def get_resource(self, name):
+        return self.resources.get(name, 0)
+
+    def spend_resource(self, name, amount):
+        if self.resources.get(name, 0) >= amount:
+            self.resources[name] -= amount
             return True
         return False
-    def can_afford(self, cost_dict):
-        return all(self.resources.get(r, 0) >= amount for r, amount in cost_dict.items())
 
-    def get_resource(self, resource):
-        return self.resources.get(resource, 0)
-    
+    def can_afford(self, costs: dict):
+        # Check if all required resources are available
+        for resource_name, cost_amount in costs.items():
+            if self.get_resource(resource_name) < cost_amount:
+                return False
+        return True
+
+    def add_resource(self, name, amount):
+        if name in self.resources:
+            self.resources[name] += amount
+
     def draw_resources(self, surface):
-        font = pg.font.SysFont(None, 30)
-        y = 100
-        for resource, amount in self.resources.items():
-            text = font.render(f"{resource.capitalize()}: {amount}", True, (255, 255, 0))
-            surface.blit(text, (10, y))
-            y += 30
+        y_offset = 10
+        for resource_name, value in self.resources.items():
+            text = f"{resource_name.capitalize()}: {value}"
+            text_surface = self.font.render(text, True, (255, 255, 255))
+            surface.blit(text_surface, (10, y_offset))
+            y_offset += 30
