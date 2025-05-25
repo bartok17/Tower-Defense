@@ -20,7 +20,7 @@
   },
   "2": {
     "id": 2,
-    "P_time": 10,
+    "P_time": 0,
     "units": [
       [
         1,
@@ -40,7 +40,7 @@
   "3": {
     "id": 3,
     "P_time": 0,
-    "inter_wave_delay": 30,
+    "inter_wave_delay": 0,
     "passive_gold": 50,
     "passive_wood": 25,
     "passive_metal": 25,
