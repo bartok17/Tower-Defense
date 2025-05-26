@@ -22,8 +22,9 @@ class Enemy:
         self.damage = template.get("damage", 10)
 
         self.abilities = Abilities()
-        for ability in template.get("abilities", []):
-            self.abilities.add_ability(ability)
+        for name in template.get("abilities", []):
+            self.abilities.add_ability(name)
+        self.abilities.apply_all(self)
 
         self.color = tuple(template.get("color", [255, 255, 255]))
         self.radius = template.get("radius", 10)
