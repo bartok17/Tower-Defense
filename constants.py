@@ -20,6 +20,9 @@ LEVELS_CONFIG = [
         "waves_path": "waves_level1.json", 
         "thumbnail_path": "level1_thumb.png", 
         "unlocked": True,
+        "start_gold": 200,  
+        "start_wood": 100, 
+        "start_metal": 50,   
     },
     {
         "id": "level2",
@@ -29,6 +32,8 @@ LEVELS_CONFIG = [
         "waves_path": "waves_level2.json",
         "thumbnail_path": "level2_thumb.png",
         "unlocked": False, 
+        "start_gold": 150,  
+        "start_wood": 75,   
+        "start_metal": 25,   
     },
-    # Add more levels
 ]
