@@ -29,7 +29,8 @@ class GameState:
 
 def initialize_game():
     pg.init()
-    screen = pg.display.set_mode((con.SCREEN_WIDTH, con.SCREEN_HEIGHT))
+    screen = pg.display.set_mode((con.SCREEN_WIDTH, con.SCREEN_HEIGHT), pg.SCALED | pg.RESIZABLE)
+
     pg.display.set_caption("Bardzo fajna gra")
     clock = pg.time.Clock()
     return screen, clock
