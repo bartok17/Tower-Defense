@@ -79,16 +79,11 @@ def draw_waypoints(screen, waypoints):
 
 def update_enemies(clock_tick, enemies_list, base, resources_manager):
     for enemy in enemies_list[:]:
-        if enemy.pos.distance_to(base.pos) > enemy.attack_range:
-            enemy.update()
-            if enemy.has_finished():
-                resources_manager.spend_resource("health", 10)
-                enemies_list.remove(enemy)
-        else:
-            enemy.attack_cooldown -= clock_tick / 1000.0
-            if enemy.attack_cooldown <= 0:
-                resources_manager.spend_resource("health", enemy.damage)
-                enemy.attack_cooldown = enemy.attack_speed
+        enemy.update()
+        if enemy.has_finished():
+            resources_manager.add_resource("health", -enemy.damage) 
+            enemies_list.remove(enemy)
+            continue 
         if enemy.is_dead():
             enemies_list.remove(enemy)
             resources_manager.add_resource("gold", enemy.gold_reward) 
