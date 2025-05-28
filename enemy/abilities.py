@@ -12,17 +12,18 @@ class Abilities:
             "ranged": aea.RangedAbility(),
             "fast": aea.FastAbility(),
             "tank": aea.TankAbility(),
-            "summoner": aea.SummonerAbility(1, "enemy"),
-            "healer": aea.HealerAbility(10),
+            "summoner": aea.SummonerAbility(1, "1"),
+            "healer": aea.HealerAbility(5),
             "boss": aea.Boss(),
-            "invisible": aea.invisibleAbility(5),
+            "invisible": aea.invisibleAbility(),
         }
-        if ability_name in self.abilities:
-            self.abilities.append(abilities_dict[ability_name])
+        if ability_name in abilities_dict:
+            self.abilities.append(abilities_dict[ability_name])  
+
     def apply_all(self, enemy):
         for ability in enemy.abilities.abilities:
             ability.apply(enemy)
 
-    def update_all(self, enemy):
-        for ability in enemy.abilities.abilities:
-            ability.update(enemy)
+    def update_all(self, enemy, clock_tick):
+        for ability in self.abilities:
+            ability.on_update(enemy, clock_tick)

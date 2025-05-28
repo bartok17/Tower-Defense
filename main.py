@@ -11,6 +11,7 @@ from typing import List
 from projectile import Projectile
 import building.buildManager as bm
 from endingScreen import EndingScreen
+from userInterface import UserInterface
 import os
 import json
 import random
@@ -28,7 +29,8 @@ class GameState:
 
 def initialize_game():
     pg.init()
-    screen = pg.display.set_mode((con.SCREEN_WIDTH, con.SCREEN_HEIGHT))
+    screen = pg.display.set_mode((con.SCREEN_WIDTH, con.SCREEN_HEIGHT), pg.SCALED | pg.RESIZABLE)
+
     pg.display.set_caption("Bardzo fajna gra")
     clock = pg.time.Clock()
     return screen, clock
@@ -48,12 +50,13 @@ def load_assets(level_config):
     waypoints_path = os.path.join(con.DATA_DIR, level_config["waypoints_path"])
     waypoints = load_lists_from_json(waypoints_path)
 
-    building_blueprints = [
+    factory_blueprints = [
         BuildingBlueprint("Metal Factory", factory_metal_img, {"gold": 60}, 40, 40, 
                           bm.build_factory, resource="metal", payout_per_wave=10),
         BuildingBlueprint("Wood Factory", factory_wood_img, {"gold": 40}, 40, 40, 
                           bm.build_factory, resource="wood", payout_per_wave=15),
-        BuildingBlueprint("Tower - basic", tower_basic_img, {"gold": 50}, 40, 40, 
+    ]
+    tower_blueprints = [        BuildingBlueprint("Tower - basic", tower_basic_img, {"gold": 50}, 40, 40, 
                           bm.build_tower, tower_type="basic"),
         BuildingBlueprint("Tower - cannon", tower_cannon_img, {"gold": 150, "wood": 70,"metal":20}, 40, 40, 
                           bm.build_tower, tower_type="cannon"),
@@ -64,24 +67,32 @@ def load_assets(level_config):
         BuildingBlueprint("Tower - sniper", tower_sniper_img, {"gold": 200, "metal": 10}, 40, 40, 
                           bm.build_tower, tower_type="sniper"),
     ]
-    building_buttons = []
+    factory_buttons = []
+    tower_buttons = []
     button_start_y = 50
     button_spacing = 60
-    for i, blueprint in enumerate(building_blueprints):
-        button = Button(con.SCREEN_WIDTH - 80, button_start_y + i * button_spacing, blueprint.image, 
-                        width=blueprint.width, height=blueprint.height)
-        building_buttons.append(button)
-    return map_img, button_img, waypoints, building_buttons, building_blueprints
+    for i, blueprint in enumerate(factory_blueprints):
+        btn = Button(0, 0, blueprint.image, blueprint.name, width=blueprint.width, height=blueprint.height, )
+
+        factory_buttons.append(btn)
+
+    for i, blueprint in enumerate(tower_blueprints):
+        btn = Button(con.SCREEN_WIDTH - 80, 50 + i * 60, blueprint.image, blueprint.name, width=blueprint.width, height=blueprint.height)
+        tower_buttons.append(btn)
+    return map_img, button_img, waypoints, factory_buttons, factory_blueprints, tower_buttons, tower_blueprints
 
 def draw_waypoints(screen, waypoints):
     for name, road in waypoints.items():
         pg.draw.lines(screen, "red", False, road, 2)
 
 def update_enemies(clock_tick, enemies_list, base, resources_manager):
+    for e in enemies_list: 
+        e.all_enemies = enemies_list
+        e.enemies_ref = enemies_list
     for enemy in enemies_list[:]:
-        enemy.update()
+        enemy.update(clock_tick)
         if enemy.has_finished():
-            resources_manager.add_resource("health", -enemy.damage) 
+            resources_manager.spend_resource("health", 10)
             enemies_list.remove(enemy)
             continue 
         if enemy.is_dead():
@@ -126,6 +137,7 @@ def run_main_menu(screen, clock):
     while running:
         mouse_pos = pg.mouse.get_pos()
         for event in pg.event.get():
+
             if event.type == pg.QUIT:
                 running = False
                 next_state = GameState.QUIT
@@ -208,13 +220,14 @@ def run_level_select(screen, clock, levels_config):
     return next_state, selected_level_config
 
 def run_game_loop(screen, clock, selected_level_config):
-    map_img, button_img, waypoints, building_buttons, building_blueprints = load_assets(selected_level_config)
+    (map_img, button_img, waypoints,
+    factory_buttons, factory_blueprints,
+    tower_buttons, tower_blueprints) = load_assets(selected_level_config)
     base = dummyEntity((0, 0))
     projectiles = []
     waves_data_list = wl.load_all_waves(
         os.path.join(con.DATA_DIR, selected_level_config["waves_path"]),
         os.path.join(con.DATA_DIR, "enemyTemplates.json"), waypoints)
-
     game_state_internal = "running"
     current_game_mode = GameState.PRE_WAVE
     current_wave_index = 0
@@ -231,7 +244,8 @@ def run_game_loop(screen, clock, selected_level_config):
         initial_metal=initial_metal,
         initial_health=initial_health 
     )
-    
+    ui = UserInterface()
+
     road_seg = bm.generate_road_segments(waypoints)
     current_wave_data = None
     wave_preparation_timer = 0 
@@ -257,6 +271,7 @@ def run_game_loop(screen, clock, selected_level_config):
         mouse_pos = pg.mouse.get_pos()
 
         for event in pg.event.get():
+            ui.handle_panel_toggle(event, con.SCREEN_WIDTH, con.SCREEN_HEIGHT)
             if event.type == pg.QUIT:
                 game_state_internal = "quit_to_menu"
             if event.type == pg.MOUSEBUTTONDOWN and event.button == 1:
@@ -278,13 +293,21 @@ def run_game_loop(screen, clock, selected_level_config):
                     selected_blueprint = None
                     clicked_on_ui_button_this_frame = True
                 if not clicked_on_ui_button_this_frame:
-                    for idx, btn in enumerate(building_buttons):
+                    for idx, btn in enumerate(factory_buttons):
                         if btn.is_clicked(mouse_pos):
-                            selected_blueprint = building_blueprints[idx]
+                            selected_blueprint = factory_blueprints[idx]
                             clicked_on_ui_button_this_frame = True
-                            break 
+                            break
+
+                    if not clicked_on_ui_button_this_frame:
+                        for idx, btn in enumerate(tower_buttons):
+                            if btn.is_clicked(mouse_pos):
+                                selected_blueprint = tower_blueprints[idx]
+                                clicked_on_ui_button_this_frame = True
+                                break
                 if selected_blueprint and not clicked_on_ui_button_this_frame:
-                    if bm.try_build(mouse_pos, selected_blueprint, resources_manager, road_seg):
+                    adjusted_pos = (mouse_pos[0] - selected_blueprint.width // 2, mouse_pos[1] - selected_blueprint.height // 2 )
+                    if bm.try_build(adjusted_pos, selected_blueprint, resources_manager, road_seg):
                         selected_blueprint = None
             if event.type == pg.KEYDOWN:
                 if event.key == pg.K_ESCAPE:
@@ -355,13 +378,12 @@ def run_game_loop(screen, clock, selected_level_config):
         screen.fill("black")
         screen.blit(map_img, (0, 0))
         draw_waypoints(screen, waypoints)
-        resources_manager.draw_resources(screen)
+        ui.draw_resources(screen, resources_manager.resources, wave_index=current_wave_index, total_waves=len(waves_data_list))
+        ui.draw_build_panel(screen, factory_buttons, tower_buttons)
         bm.draw_factories(screen)
         for tower_instance in bm.towers: tower_instance.draw(screen)
         for enemy_instance in enemies_list: enemy_instance.draw(screen)
         for projectile_instance in projectiles: projectile_instance.draw(screen)
-        for btn in building_buttons:
-            btn.draw(screen)
         if selected_blueprint:
             selected_blueprint.draw_ghost(screen, resources_manager, road_seg)
         if current_game_mode == GameState.PRE_WAVE and current_wave_index < len(waves_data_list):

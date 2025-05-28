@@ -15,7 +15,7 @@
     ],
     "radius": 10,
     "abilities": [
-      
+      "summoner"
     ],
     "gold_reward": 10,
     "shape": "circle"

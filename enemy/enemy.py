@@ -1,4 +1,5 @@
 import pygame as pg
+import enemy.abstractEnemyAbilities as aea
 from enemy.abilities import Abilities
 
 class Enemy:
@@ -28,10 +29,11 @@ class Enemy:
         self.color = tuple(template.get("color", [255, 255, 255]))
         self.radius = template.get("radius", 10)
         self.shape = template.get("shape", "circle")
+        self.special_texts = []
         self.incoming_damage = 0
         self.gold_reward = template.get("gold_reward", 5)
 
-    def update(self):
+    def update(self, clock_tick=0):
         if self.curr_waypoint + 1 < len(self.waypoints):
             next_target = pg.Vector2(self.waypoints[self.curr_waypoint + 1])
             direction = (next_target - self.pos).normalize()
@@ -39,21 +41,38 @@ class Enemy:
             if self.pos.distance_to(next_target) < self.speed:
                 self.pos = next_target
                 self.curr_waypoint += 1
+        if self.abilities:
+            self.abilities.update_all(self, clock_tick)
+        for ft in self.special_texts[:]:
+            ft["lifetime"] -= clock_tick / 1000.0
+            ft["pos"].y -= 0.2 
+            if ft["lifetime"] <= 0: self.special_texts.remove(ft)
 
     def draw(self, map_surface):
         r, g, b = self.color
+        draw_alpha = 255
+        if self.has_ability(aea.invisibleAbility):
+            draw_alpha = 60
+
+        shape_surface = pg.Surface((self.radius * 2, self.radius * 2), pg.SRCALPHA)
         if self.shape == "circle":
-            pg.draw.circle(map_surface, (r, g, b), (int(self.pos.x), int(self.pos.y)), self.radius)
+            pg.draw.circle(shape_surface, (r, g, b, draw_alpha), (self.radius, self.radius), self.radius)
         elif self.shape == "square":
-            rect = pg.Rect(self.pos.x - self.radius, self.pos.y - self.radius, self.radius * 2, self.radius * 2)
-            pg.draw.rect(map_surface, (r, g, b), rect)
+            pg.draw.rect(shape_surface, (r, g, b, draw_alpha), (0, 0, self.radius * 2, self.radius * 2))
         elif self.shape == "triangle":
             points = [
-                (self.pos.x, self.pos.y - self.radius),
-                (self.pos.x - self.radius, self.pos.y + self.radius),
-                (self.pos.x + self.radius, self.pos.y + self.radius)
+                (self.radius, 0),
+                (0, self.radius * 2),
+                (self.radius * 2, self.radius * 2)
             ]
-            pg.draw.polygon(map_surface, (r, g, b), points)
+            pg.draw.polygon(shape_surface, (r, g, b, draw_alpha), points)
+        map_surface.blit(shape_surface, (self.pos.x - self.radius, self.pos.y - self.radius))
+        font = pg.font.Font(None, 24)
+        for ft in self.special_texts:
+            alpha = int(255 * (ft["lifetime"] / 1.0))
+            surface = font.render(ft["text"], True, ft["color"])
+            surface.set_alpha(alpha)
+            map_surface.blit(surface, (ft["pos"].x, ft["pos"].y - 20))
 
     def take_damage(self, value):
         self.health -= value
@@ -86,3 +105,5 @@ class Enemy:
     def get_effective_health(self):
         # Health after accounting for incoming damage
         return self.health - self.incoming_damage
+    def has_ability(self, ability_type):
+        return any(isinstance(a, ability_type) for a in self.abilities.abilities)
