@@ -86,17 +86,14 @@ def draw_waypoints(screen, waypoints):
         pg.draw.lines(screen, "red", False, road, 2)
 
 def update_enemies(clock_tick, enemies_list, base, resources_manager):
+    for e in enemies_list: 
+        e.all_enemies = enemies_list
+        e.enemies_ref = enemies_list
     for enemy in enemies_list[:]:
-        if enemy.pos.distance_to(base.pos) > enemy.attack_range:
-            enemy.update()
-            if enemy.has_finished():
-                resources_manager.spend_resource("health", 10)
-                enemies_list.remove(enemy)
-        else:
-            enemy.attack_cooldown -= clock_tick / 1000.0
-            if enemy.attack_cooldown <= 0:
-                resources_manager.spend_resource("health", enemy.damage)
-                enemy.attack_cooldown = enemy.attack_speed
+        enemy.update(clock_tick)
+        if enemy.has_finished():
+            resources_manager.spend_resource("health", 10)
+            enemies_list.remove(enemy)
         if enemy.is_dead():
             enemies_list.remove(enemy)
             resources_manager.add_resource("gold", enemy.gold_reward) 

@@ -18,7 +18,6 @@ class Factory:
         else:
             self.image = pg.Surface((40, 40))
             self.image.fill((100,100,100))
-        print("Factory position:", position)
 
     def update(self, delta_time, manager):
         pass  # Reserved for future per-frame updates

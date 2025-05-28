@@ -34,7 +34,7 @@ def build_tower(position, blueprint, resource_manager):
         tower_type_name = blueprint.name.replace("Tower - ", "").lower()
         adjusted_pos = (position[0] + blueprint.width // 2,position[1] + blueprint.height // 2)
         new_tower = create_tower(adjusted_pos, tower_type_name)
-
+        if tower_type_name == "sniper": new_tower.can_see_invisible = True
         towers.append(new_tower)
         building_rects.append(pg.Rect(position[0], position[1], blueprint.width, blueprint.height))
         return True

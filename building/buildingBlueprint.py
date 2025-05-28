@@ -24,7 +24,7 @@ class BuildingBlueprint:
         ghost_image = pg.transform.scale(self.image, (self.width, self.height)).copy()
         ghost_image.set_alpha(120)  
         screen.blit(ghost_image, (x, y))
-        print("Ghost center at:", mouse_x, mouse_y)
+
 
 
 
