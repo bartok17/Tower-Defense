@@ -1,5 +1,4 @@
 import pygame as pg
-
 from enemy.abilities import Abilities
 
 class Enemy:
@@ -28,6 +27,9 @@ class Enemy:
 
         self.color = tuple(template.get("color", [255, 255, 255]))
         self.radius = template.get("radius", 10)
+        self.shape = template.get("shape", "circle")
+        self.incoming_damage = 0
+        self.gold_reward = template.get("gold_reward", 5)
 
     def update(self):
         if self.curr_waypoint + 1 < len(self.waypoints):
@@ -37,10 +39,21 @@ class Enemy:
             if self.pos.distance_to(next_target) < self.speed:
                 self.pos = next_target
                 self.curr_waypoint += 1
-                
+
     def draw(self, map_surface):
         r, g, b = self.color
-        pg.draw.circle(map_surface, (r, g, b), (int(self.pos.x), int(self.pos.y)), self.radius)
+        if self.shape == "circle":
+            pg.draw.circle(map_surface, (r, g, b), (int(self.pos.x), int(self.pos.y)), self.radius)
+        elif self.shape == "square":
+            rect = pg.Rect(self.pos.x - self.radius, self.pos.y - self.radius, self.radius * 2, self.radius * 2)
+            pg.draw.rect(map_surface, (r, g, b), rect)
+        elif self.shape == "triangle":
+            points = [
+                (self.pos.x, self.pos.y - self.radius),
+                (self.pos.x - self.radius, self.pos.y + self.radius),
+                (self.pos.x + self.radius, self.pos.y + self.radius)
+            ]
+            pg.draw.polygon(map_surface, (r, g, b), points)
 
     def take_damage(self, value):
         self.health -= value
@@ -49,7 +62,7 @@ class Enemy:
 
     def is_dead(self):
         return self.health <= 0
-    
+
     def distance_to_end(self):
         total_distance = 0
         current_position = self.pos
@@ -60,4 +73,16 @@ class Enemy:
         return total_distance
 
     def has_finished(self):
-        return self.curr_waypoint >= len(self.waypoints) - 1 
+        return self.curr_waypoint >= len(self.waypoints) - 1
+
+    def add_incoming_damage(self, amount):
+        self.incoming_damage += amount
+
+    def remove_incoming_damage(self, amount):
+        self.incoming_damage -= amount
+        if self.incoming_damage < 0:
+            self.incoming_damage = 0
+
+    def get_effective_health(self):
+        # Health after accounting for incoming damage
+        return self.health - self.incoming_damage

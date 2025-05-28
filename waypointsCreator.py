@@ -3,14 +3,10 @@ import pygame as pg
 import constants as con
 import os
 
-'''here you can create waypoint dictionaries
-just create lists and use save_lists_to_json() to save'''
-
+# Ensure data directory exists
 os.makedirs(con.DATA_DIR, exist_ok=True)
 
-
 def save_lists_to_json(filename, **lists):
-    
     with open(filename, 'w') as f:
         json.dump(lists, f)
 
@@ -19,13 +15,12 @@ def load_lists_from_json(filename):
         return json.load(f)
 
 if __name__ == "__main__":
-    mapName = "map1"
+    mapName = "map2"
 
     list1 = [(725,0),(725,585),(415,585),(0,1000)]
     list2 = [(725,0),(725,585),(970,1000)]
 
     pg.init()
-
     screen = pg.display.set_mode((con.SCREEN_WIDTH, con.SCREEN_HEIGHT))
     pg.display.set_caption("Waypoint Creator")
 
@@ -51,8 +46,8 @@ if __name__ == "__main__":
                 pos = pg.mouse.get_pos()
                 last_point = current_road[-1] if current_road else None
                 if last_point:
+                    # Snap to axis or edge if close
                     if abs(pos[0] - last_point[0]) < 10:
-                        print(str(abs(pos[0] - last_point[0])))
                         pos = (last_point[0], pos[1])
                     if abs(pos[1] - last_point[1]) < 10:
                         pos = (pos[0], last_point[1])
@@ -71,17 +66,17 @@ if __name__ == "__main__":
             elif event.type == pg.KEYDOWN:
                 if event.key == pg.K_BACKSPACE and pg.key.get_mods() & pg.KMOD_CTRL:
                     if all_roads:
-                        all_roads.pop()
+                        all_roads.pop()  # Remove last road
                 elif event.key == pg.K_BACKSPACE and pg.key.get_mods() & pg.KMOD_SHIFT:
                     all_roads = []
-                    current_road = []
+                    current_road = []  # Clear all
                 elif event.key == pg.K_BACKSPACE:
                     if current_road:
-                        current_road.pop()
+                        current_road.pop()  # Remove last point
                 elif event.key == pg.K_RETURN:
                     if current_road:
                         all_roads.append(current_road)
-                        current_road = []
+                        current_road = []  # Commit current road
                 elif event.key == pg.K_s:
                     road_dict = {f"road{i+1}": road for i, road in enumerate(all_roads)}
                     save_lists_to_json(save_path, **road_dict)

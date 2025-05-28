@@ -15,7 +15,9 @@ class Projectile:
         if self.explosive and enemies_list is not None:
             for enemy in enemies_list:
                 if self.pos.distance_to(enemy.pos) <= self.explosion_radius:
-                    enemy.take_damage(self.damage)
+                    distance = self.pos.distance_to(enemy.pos)
+                    damage_factor = max(0.5, 1 - (distance / self.explosion_radius) * 0.5)
+                    enemy.take_damage(self.damage * damage_factor)
         else:
             self.target.take_damage(self.damage)
         self.active = False

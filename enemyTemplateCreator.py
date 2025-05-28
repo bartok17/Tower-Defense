@@ -19,11 +19,16 @@ template = {
     "attack_speed": 1.0,
     "color": [255, 255, 255],
     "radius": 10,
-    "abilities": []
+    "abilities": [],
+    "shape": "circle",  # Enemy shape type
+    "gold_reward": 10
 }
 
 abilities_list = ["magic_resistant", "ranged", "boss", "fast", "slow", "healer", "tank", "summoner", "invisible"]
 selected_ability_index = 0
+
+shapes_list = ["circle", "square", "triangle"]
+selected_shape_index = 0
 
 template_path = os.path.join(con.DATA_DIR, "enemyTemplates.json")
 if os.path.exists(template_path):
@@ -34,22 +39,33 @@ else:
 
 def draw_interface():
     screen.fill((30, 30, 30))
-    pg.draw.circle(screen, template["color"], (500, 200), template["radius"])
+    # Draw enemy preview
+    if template["shape"] == "circle":
+        pg.draw.circle(screen, template["color"], (500, 200), template["radius"])
+    elif template["shape"] == "square":
+        rect = pg.Rect(500 - template["radius"], 200 - template["radius"], template["radius"] * 2, template["radius"] * 2)
+        pg.draw.rect(screen, template["color"], rect)
+    elif template["shape"] == "triangle":
+        points = [
+            (500, 200 - template["radius"]),
+            (500 - template["radius"], 200 + template["radius"]),
+            (500 + template["radius"], 200 + template["radius"])
+        ]
+        pg.draw.polygon(screen, template["color"], points)
     
     lines = [
         f"ID: {template['id']} ← →",
         f"Health: {template['health']}  [W/S]",
         f"Speed: {template['speed']}  [A/D]",
-
         f"Armor: {template['armor']}  [T/G]",
         f"Magic Res: {template['magic_resistance']}  [Y/H]",
-
         f"Radius: {template['radius']}  [Q/E]",
-        f"Color RGB: {template['color']}  [Z/X/C]", #Potem pewnie jakies grafiki do wyboru
-
+        f"Color RGB: {template['color']}  [Z/X/C]",
+        f"Shape: {template['shape']}  [V]",
         f"Range: {template['attack_range']}  [U/J]",
         f"Damage: {template['damage']}  [N/M]",
         f"Attack speed: {template['attack_speed']} [K/L]",
+        f"Gold Reward: {template['gold_reward']} [O/P]", 
         f"Abilities: {template['abilities']}",
         f"Selected ability: {abilities_list[selected_ability_index]}  [Tab]",
         f"[R] Add/Remove ability",
@@ -74,6 +90,7 @@ while running:
                     used_ids = [int(i) for i in templates.keys()]
                     next_id = max(used_ids, default=0) + 1
                     template["id"] = next_id
+                    template["shape"] = shapes_list[selected_shape_index]
                     templates[str(template["id"])] = dict(template)
                     with open(template_path, "w") as f:
                         json.dump(templates, f, indent=2)
@@ -84,6 +101,8 @@ while running:
                 case pg.K_s: template["health"] = max(5, template["health"] - 5)
                 case pg.K_a: template["speed"] = max(0.1, round(template["speed"] - 0.1, 1))
                 case pg.K_d: template["speed"] = round(template["speed"] + 0.1, 1)
+                case pg.K_o: template["gold_reward"] = max(0, template["gold_reward"] - 1) 
+                case pg.K_p: template["gold_reward"] += 1 
                 case pg.K_q: template["radius"] = max(2, template["radius"] - 1)
                 case pg.K_e: template["radius"] += 1
                 case pg.K_n: template["damage"] = max(0, template["damage"] - 1)
@@ -104,4 +123,7 @@ while running:
                     ability = abilities_list[selected_ability_index]
                     if ability in template["abilities"]: template["abilities"].remove(ability)
                     else: template["abilities"].append(ability)
-pg.quit()    
+                case pg.K_v:
+                    selected_shape_index = (selected_shape_index + 1) % len(shapes_list)
+                    template["shape"] = shapes_list[selected_shape_index]
+pg.quit()

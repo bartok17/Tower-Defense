@@ -13,8 +13,8 @@ import building.buildManager as bm
 from endingScreen import EndingScreen
 import os
 import json
+import random
 
-ENEMY_INTER_SPAWN_DELAY = 500  # ms between enemy spawns
 LEVELS_CONFIG_FILENAME = "levels_config.json"
 
 class GameState:
@@ -49,19 +49,19 @@ def load_assets(level_config):
     waypoints = load_lists_from_json(waypoints_path)
 
     building_blueprints = [
-        BuildingBlueprint("Metal Factory", factory_metal_img, {"gold": 50, "metal": 20}, 40, 40, 
+        BuildingBlueprint("Metal Factory", factory_metal_img, {"gold": 60}, 40, 40, 
                           bm.build_factory, resource="metal", payout_per_wave=10),
-        BuildingBlueprint("Wood Factory", factory_wood_img, {"gold": 40, "wood": 10}, 40, 40, 
+        BuildingBlueprint("Wood Factory", factory_wood_img, {"gold": 40}, 40, 40, 
                           bm.build_factory, resource="wood", payout_per_wave=15),
-        BuildingBlueprint("Tower - basic", tower_basic_img, {"gold": 100, "wood": 50}, 40, 40, 
+        BuildingBlueprint("Tower - basic", tower_basic_img, {"gold": 50}, 40, 40, 
                           bm.build_tower, tower_type="basic"),
-        BuildingBlueprint("Tower - cannon", tower_cannon_img, {"gold": 150, "wood": 70}, 40, 40, 
+        BuildingBlueprint("Tower - cannon", tower_cannon_img, {"gold": 150, "wood": 70,"metal":20}, 40, 40, 
                           bm.build_tower, tower_type="cannon"),
-        BuildingBlueprint("Tower - flame", tower_flame_img, {"gold": 120, "wood": 60}, 40, 40, 
+        BuildingBlueprint("Tower - flame", tower_flame_img, {"gold": 200, "wood": 150}, 40, 40, 
                           bm.build_tower, tower_type="flame"),
-        BuildingBlueprint("Tower - rapid", tower_rapid_img, {"gold": 80, "wood": 40}, 40, 40, 
+        BuildingBlueprint("Tower - rapid", tower_rapid_img, {"gold": 150,"wood": 20}, 40, 40, 
                           bm.build_tower, tower_type="rapid"),
-        BuildingBlueprint("Tower - sniper", tower_sniper_img, {"gold": 200, "wood": 100}, 40, 40, 
+        BuildingBlueprint("Tower - sniper", tower_sniper_img, {"gold": 200, "metal": 10}, 40, 40, 
                           bm.build_tower, tower_type="sniper"),
     ]
     building_buttons = []
@@ -91,7 +91,7 @@ def update_enemies(clock_tick, enemies_list, base, resources_manager):
                 enemy.attack_cooldown = enemy.attack_speed
         if enemy.is_dead():
             enemies_list.remove(enemy)
-            resources_manager.add_resource("gold", getattr(enemy, 'gold_reward', 50)) 
+            resources_manager.add_resource("gold", enemy.gold_reward) 
 
 def update_towers(clock_tick, towers, enemies_list, waypoints, projectiles):
     for tower in towers:
@@ -104,6 +104,8 @@ def update_projectiles(clock_tick: int, projectiles: List[Projectile], enemies_l
     for projectile in projectiles[:]:
         projectile.update(clock_tick, enemies_list)
         if not projectile.active:
+            if hasattr(projectile, 'on_removed'): 
+                projectile.on_removed()
             projectiles.remove(projectile)
 
 def run_main_menu(screen, clock):
@@ -238,8 +240,13 @@ def run_game_loop(screen, clock, selected_level_config):
     road_seg = bm.generate_road_segments(waypoints)
     current_wave_data = None
     wave_preparation_timer = 0 
-    enemy_spawn_index_in_wave = 0
     time_since_last_spawn_in_wave = 0
+
+    # Spawning state
+    current_group_idx_in_wave = 0
+    spawn_idx_within_group = 0
+    inter_group_delay_timer = 0.0
+    
     start_wave_button = Button(
         con.SCREEN_WIDTH // 2 - 100, con.SCREEN_HEIGHT - 70, None,
         text=f"Start Wave {current_wave_index + 1}", text_color=(255, 255, 255), font_size=28,
@@ -265,8 +272,13 @@ def run_game_loop(screen, clock, selected_level_config):
                     current_game_mode = GameState.WAVE_ACTIVE
                     current_wave_data = waves_data_list[current_wave_index]
                     wave_preparation_timer = current_wave_data.get("P_time", 0) * 1000
-                    enemy_spawn_index_in_wave = 0
+                    
+                    # Reset spawning state for new wave
                     time_since_last_spawn_in_wave = 0
+                    current_group_idx_in_wave = 0
+                    spawn_idx_within_group = 0
+                    inter_group_delay_timer = 0.0
+
                     start_wave_button.text = f"Wave {current_wave_index + 1} Active"
                     selected_blueprint = None
                     clicked_on_ui_button_this_frame = True
@@ -296,37 +308,47 @@ def run_game_loop(screen, clock, selected_level_config):
         elif current_game_mode == GameState.WAVE_ACTIVE:
             wave_preparation_timer -= clock_tick
             if wave_preparation_timer <= 0 and current_wave_data:
-                if enemy_spawn_index_in_wave < len(current_wave_data.get("enemies", [])):
-                    time_since_last_spawn_in_wave += clock_tick
-                    if time_since_last_spawn_in_wave >= ENEMY_INTER_SPAWN_DELAY:
-                        try:
-                            if current_wave_data.get("enemies") and enemy_spawn_index_in_wave < len(current_wave_data["enemies"]):
-                                enemy_instance = current_wave_data["enemies"][enemy_spawn_index_in_wave]
-                                if enemy_instance is None:
-                                    enemy_spawn_index_in_wave += 1 
-                                    time_since_last_spawn_in_wave = 0
-                                else:
-                                    enemies_list.append(enemy_instance)
-                                    enemy_spawn_index_in_wave += 1
-                                    time_since_last_spawn_in_wave = 0
-                        except Exception as e:
-                            enemy_spawn_index_in_wave += 1 
-                            time_since_last_spawn_in_wave = 0
-                elif len(enemies_list) == 0:
-                    resources_manager.add_resource("gold", current_wave_data.get("passive_gold", 0))
-                    resources_manager.add_resource("wood", current_wave_data.get("passive_wood", 0))
-                    resources_manager.add_resource("metal", current_wave_data.get("passive_metal", 0))
-                    for factory_instance in bm.factories:
-                        resource_type, amount = factory_instance.get_wave_payout()
-                        resources_manager.add_resource(resource_type, amount)
-                    current_wave_index += 1
-                    if current_wave_index >= len(waves_data_list):
-                        game_state_internal = "victory"
-                        level_was_won = True
-                    else:
-                        current_game_mode = GameState.PRE_WAVE
-                        start_wave_button.text = f"Start Wave {current_wave_index + 1}"
-        
+                # Enemy spawning logic
+                if inter_group_delay_timer > 0:
+                    inter_group_delay_timer -= clock_tick
+                    if inter_group_delay_timer < 0: 
+                        inter_group_delay_timer = 0.0
+                else:
+                    enemy_groups_in_wave = current_wave_data.get("enemy_groups", [])
+                    if current_group_idx_in_wave < len(enemy_groups_in_wave):
+                        current_group_info = enemy_groups_in_wave[current_group_idx_in_wave]
+                        enemies_to_spawn_this_group = current_group_info["enemies_to_spawn"]
+                        delay_after_this_group_seconds = current_group_info["delay_after_group"]
+                        current_inter_enemy_spawn_delay = current_group_info.get("inter_enemy_spawn_delay_ms", 500)
+
+                        if spawn_idx_within_group < len(enemies_to_spawn_this_group):
+                            time_since_last_spawn_in_wave += clock_tick
+                            if time_since_last_spawn_in_wave >= current_inter_enemy_spawn_delay:
+                                enemy_instance = enemies_to_spawn_this_group[spawn_idx_within_group]
+                                enemies_list.append(enemy_instance)
+                                spawn_idx_within_group += 1
+                                time_since_last_spawn_in_wave = 0 
+                        else:
+                            current_group_idx_in_wave += 1
+                            spawn_idx_within_group = 0 
+                            inter_group_delay_timer = delay_after_this_group_seconds * 1000.0
+                    elif len(enemies_list) == 0:
+                        # All groups processed and all enemies cleared
+                        resources_manager.add_resource("gold", current_wave_data.get("passive_gold", 0))
+                        resources_manager.add_resource("wood", current_wave_data.get("passive_wood", 0))
+                        resources_manager.add_resource("metal", current_wave_data.get("passive_metal", 0))
+                        for factory_instance in bm.factories:
+                            resource_type, amount = factory_instance.get_wave_payout()
+                            resources_manager.add_resource(resource_type, amount)
+                        
+                        current_wave_index += 1
+                        if current_wave_index >= len(waves_data_list):
+                            game_state_internal = "victory"
+                            level_was_won = True
+                        else:
+                            current_game_mode = GameState.PRE_WAVE
+                            start_wave_button.text = f"Start Wave {current_wave_index + 1}"
+
         bm.update_factories(clock_tick, resources_manager)
         update_enemies(clock_tick, enemies_list, base, resources_manager)
         update_towers(clock_tick, bm.towers, enemies_list, waypoints, projectiles)

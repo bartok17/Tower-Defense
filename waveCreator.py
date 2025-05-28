@@ -15,6 +15,28 @@ clock = pg.time.Clock()
 font = pg.font.SysFont(None, 24)
 font_small = pg.font.SysFont(None, 20)
 
+DEFAULT_INTER_ENEMY_SPAWN_DELAY_MS = 500
+
+selected_entry_in_wave_idx = -1
+
+def migrate_wave_units_format(wave_data_dict):
+    """Convert units to [id, count, delay_after_group_sec, inter_enemy_spawn_delay_ms] format."""
+    if "units" in wave_data_dict:
+        migrated_units = []
+        for unit_entry in wave_data_dict.get("units", []):
+            if isinstance(unit_entry, list):
+                if len(unit_entry) == 2:
+                    migrated_units.append([unit_entry[0], unit_entry[1], 1.0, DEFAULT_INTER_ENEMY_SPAWN_DELAY_MS])
+                elif len(unit_entry) == 3:
+                    migrated_units.append([unit_entry[0], unit_entry[1], unit_entry[2], DEFAULT_INTER_ENEMY_SPAWN_DELAY_MS])
+                elif len(unit_entry) == 4:
+                    migrated_units.append(list(unit_entry))
+                else:
+                    if len(unit_entry) > 1:
+                         migrated_units.append([unit_entry[0], unit_entry[1], 1.0, DEFAULT_INTER_ENEMY_SPAWN_DELAY_MS])
+        wave_data_dict["units"] = migrated_units
+    return wave_data_dict
+
 def get_default_wave_template():
     return {
         "id": 1,
@@ -28,6 +50,8 @@ def get_default_wave_template():
     }
 
 def choose_wave_file():
+    global selected_entry_in_wave_idx
+    selected_entry_in_wave_idx = -1
     print("\nWave File Management:")
     action = input("Create (N)ew wave file or (E)dit existing? (N/E): ").strip().lower()
     if action == 'n':
@@ -68,7 +92,10 @@ def choose_wave_file():
                 print(f"Loading wave file: {file_path}")
                 with open(file_path, "r") as f:
                     try:
-                        loaded_waves = json.load(f)
+                        loaded_waves_raw = json.load(f)
+                        loaded_waves = {}
+                        for wave_id_str, wave_content in loaded_waves_raw.items():
+                            loaded_waves[wave_id_str] = migrate_wave_units_format(dict(wave_content))
                         return file_path, loaded_waves
                     except json.JSONDecodeError:
                         print(f"Error: File '{file_path}' is not valid JSON. Starting with empty data for this file.")
@@ -93,11 +120,22 @@ current_wave_edit_buffer = get_default_wave_template()
 active_wave_id = None
 
 if all_waves_in_file:
-    first_wave_id_str = sorted(all_waves_in_file.keys(), key=lambda x: int(x))[0]
-    active_wave_id = int(first_wave_id_str)
-    current_wave_edit_buffer = dict(all_waves_in_file[first_wave_id_str])
+    try:
+        first_wave_id_str = sorted(all_waves_in_file.keys(), key=int)[0]
+        active_wave_id = int(first_wave_id_str)
+        current_wave_edit_buffer = dict(all_waves_in_file[first_wave_id_str])
+        if current_wave_edit_buffer.get("units"):
+            selected_entry_in_wave_idx = 0
+        else:
+            selected_entry_in_wave_idx = -1
+    except ValueError:
+        print("Warning: Could not determine the first wave ID due to non-integer keys. Buffer starts empty.")
+        active_wave_id = None
+        current_wave_edit_buffer = get_default_wave_template()
+        selected_entry_in_wave_idx = -1
 else:
     current_wave_edit_buffer['id'] = 1
+    selected_entry_in_wave_idx = -1
 
 with open(os.path.join(con.DATA_DIR, "enemyTemplates.json"), "r") as f:
     enemy_templates_data = json.load(f)
@@ -112,7 +150,7 @@ def set_status_message(msg, duration=120):
     status_message_timer = duration
 
 def draw_interface():
-    global status_message, status_message_timer
+    global status_message, status_message_timer, selected_entry_in_wave_idx
     screen.fill((30, 30, 30))
 
     file_info_text = font.render(f"Editing File: {os.path.basename(current_wave_file_path)}", True, (200, 200, 0))
@@ -131,12 +169,29 @@ def draw_interface():
         f"Passive Gold: {current_wave_edit_buffer['passive_gold']} [U/I]",
         f"Passive Wood: {current_wave_edit_buffer['passive_wood']} [J/K]",
         f"Passive Metal: {current_wave_edit_buffer['passive_metal']} [O/P]",
-        "Units in this wave (ID, Count):",
+        "Units in this wave (ID, Count, Delay After Grp, Inter-Spawn Delay):",
+        "  [CTRL+UP/DOWN to select entry]",
     ]
-    for unit_data in current_wave_edit_buffer['units']:
-        unit_id, unit_count = unit_data[0], unit_data[1]
-        unit_name = enemy_templates_data.get(str(unit_id), {}).get("name", f"Unknown Unit {unit_id}")
-        lines_left.append(f"  {unit_name} (ID:{unit_id}) x {unit_count}")
+    if not current_wave_edit_buffer['units']:
+        lines_left.append("  (No units added yet)")
+    else:
+        if not (0 <= selected_entry_in_wave_idx < len(current_wave_edit_buffer['units'])):
+            if current_wave_edit_buffer['units']:
+                selected_entry_in_wave_idx = 0
+            else:
+                selected_entry_in_wave_idx = -1
+
+        for idx, unit_data_entry in enumerate(current_wave_edit_buffer['units']):
+            unit_id, unit_count = unit_data_entry[0], unit_data_entry[1]
+            delay_val = unit_data_entry[2] if len(unit_data_entry) > 2 else 1.0 
+            inter_spawn_delay_ms_val = unit_data_entry[3] if len(unit_data_entry) > 3 else DEFAULT_INTER_ENEMY_SPAWN_DELAY_MS
+            
+            unit_name = enemy_templates_data.get(str(unit_id), {}).get("name", f"Unknown Unit {unit_id}")
+            prefix = ">> " if idx == selected_entry_in_wave_idx else "   "
+            lines_left.append(f"{prefix}{unit_name} (ID:{unit_id}) x {unit_count}, DlyGrp: {delay_val:.1f}s, DlySpawn: {inter_spawn_delay_ms_val}ms")
+        
+        if selected_entry_in_wave_idx != -1 and current_wave_edit_buffer['units']:
+            lines_left.append("  (Selected: CTRL+LEFT/RIGHT for count, ALT+L/R for DlyGrp, SHIFT+L/R for DlySpawn, BACKSPACE to remove)")
 
     for i, line in enumerate(lines_left):
         text = font.render(line, True, (200, 200, 200))
@@ -173,7 +228,9 @@ def draw_interface():
     y_instr_start = screen_height - 100
     instructions = [
         "F1: New Wave | F2: Load Wave (console) | ENTER: Save Wave to Memory | DEL: Delete Active Wave from Memory",
-        "F12: SAVE ALL WAVES TO FILE | ESC: Quit (without saving to file unless F12 was used)"
+        "F12: SAVE ALL WAVES TO FILE | ESC: Quit (without saving to file unless F12 was used)",
+        "Unit Entry Controls (when entry selected in left panel):",
+        "  CTRL+UP/DOWN: Select entry | CTRL+L/R: Count | ALT+L/R: Delay After Group | SHIFT+L/R: Inter-Spawn Delay | BACKSPACE: Remove"
     ]
     for i, line in enumerate(instructions):
         text = font_small.render(line, True, (100, 255, 100))
@@ -192,6 +249,8 @@ def draw_interface():
 running = True
 while running:
     draw_interface()
+    keys = pg.key.get_pressed()
+
     for event in pg.event.get():
         if event.type == pg.QUIT:
             running = False
@@ -236,15 +295,9 @@ while running:
                 selected_unit_info = available_units_for_selection[selected_unit_idx]
                 unit_id_to_add = selected_unit_info['unit_id']
                 num_to_add = selected_unit_info['number']
-                found = False
-                for unit_in_wave in current_wave_edit_buffer['units']:
-                    if unit_in_wave[0] == unit_id_to_add:
-                        unit_in_wave[1] += num_to_add
-                        found = True
-                        break
-                if not found:
-                    current_wave_edit_buffer['units'].append([unit_id_to_add, num_to_add])
-                set_status_message(f"Added {num_to_add} of Unit ID {unit_id_to_add} to wave buffer.")
+                current_wave_edit_buffer['units'].append([unit_id_to_add, num_to_add, 1.0, DEFAULT_INTER_ENEMY_SPAWN_DELAY_MS])
+                selected_entry_in_wave_idx = len(current_wave_edit_buffer['units']) - 1
+                set_status_message(f"Added {num_to_add} of Unit ID {unit_id_to_add} as new entry.")
             elif event.key == pg.K_x:
                 unit_id_to_remove = available_units_for_selection[selected_unit_idx]['unit_id']
                 initial_len = len(current_wave_edit_buffer['units'])
@@ -256,6 +309,7 @@ while running:
             elif event.key == pg.K_F1:
                 active_wave_id = None 
                 current_wave_edit_buffer = get_default_wave_template()
+                selected_entry_in_wave_idx = -1
                 if all_waves_in_file:
                     next_id_val = max((int(k) for k in all_waves_in_file.keys()), default=0) + 1
                 else:
@@ -269,6 +323,10 @@ while running:
                     if load_id_str in all_waves_in_file:
                         active_wave_id = int(load_id_str)
                         current_wave_edit_buffer = dict(all_waves_in_file[load_id_str])
+                        if current_wave_edit_buffer.get("units"):
+                            selected_entry_in_wave_idx = 0
+                        else:
+                            selected_entry_in_wave_idx = -1
                         set_status_message(f"Loaded Wave ID {active_wave_id} into buffer.")
                     else:
                         set_status_message(f"Error: Wave ID {load_id_str} not found in memory for this file.")
@@ -282,10 +340,11 @@ while running:
                         set_status_message(f"Error: Target ID {editor_wave_id} already exists. Cannot change ID to this.")
                         current_wave_edit_buffer['id'] = active_wave_id
                     else:
-                        del all_waves_in_file[str(active_wave_id)]
+                        if str(active_wave_id) in all_waves_in_file:
+                            del all_waves_in_file[str(active_wave_id)]
                         all_waves_in_file[editor_wave_id_str] = dict(current_wave_edit_buffer)
-                        active_wave_id = editor_wave_id
-                        set_status_message(f"Wave ID changed from {str(active_wave_id)} to {editor_wave_id_str} and saved to memory.")
+                        active_wave_id = editor_wave_id 
+                        set_status_message(f"Wave ID changed to {editor_wave_id_str} and saved to memory.")
                 elif editor_wave_id_str in all_waves_in_file and active_wave_id is None:
                     set_status_message(f"Error: ID {editor_wave_id_str} already exists. Choose a different ID for this new wave.")
                 else:
@@ -300,6 +359,7 @@ while running:
                         set_status_message(f"Deleted Wave ID {wave_id_to_delete_str} from memory.")
                         active_wave_id = None
                         current_wave_edit_buffer = get_default_wave_template()
+                        selected_entry_in_wave_idx = -1
                         if all_waves_in_file:
                             current_wave_edit_buffer['id'] = max((int(k) for k in all_waves_in_file.keys()), default=0) + 1
                         else:
@@ -315,6 +375,62 @@ while running:
                     set_status_message(f"All waves saved to file: {os.path.basename(current_wave_file_path)}")
                 except Exception as e:
                     set_status_message(f"Error saving to file: {e}")
+
+        # Entry selection and editing
+        elif keys[pg.K_LCTRL] or keys[pg.K_RCTRL]:
+            if event.key == pg.K_UP:
+                if current_wave_edit_buffer['units']:
+                    selected_entry_in_wave_idx = max(0, selected_entry_in_wave_idx - 1)
+                    set_status_message(f"Selected entry index: {selected_entry_in_wave_idx}")
+            elif event.key == pg.K_DOWN:
+                if current_wave_edit_buffer['units']:
+                    selected_entry_in_wave_idx = min(len(current_wave_edit_buffer['units']) - 1, selected_entry_in_wave_idx + 1)
+                    set_status_message(f"Selected entry index: {selected_entry_in_wave_idx}")
+            elif event.key == pg.K_LEFT:
+                if 0 <= selected_entry_in_wave_idx < len(current_wave_edit_buffer['units']):
+                    entry = current_wave_edit_buffer['units'][selected_entry_in_wave_idx]
+                    entry[1] = max(1, entry[1] - 1)
+                    set_status_message(f"Unit entry count: {entry[1]}")
+            elif event.key == pg.K_RIGHT:
+                if 0 <= selected_entry_in_wave_idx < len(current_wave_edit_buffer['units']):
+                    entry = current_wave_edit_buffer['units'][selected_entry_in_wave_idx]
+                    entry[1] += 1
+                    set_status_message(f"Unit entry count: {entry[1]}")
+
+        elif keys[pg.K_LALT] or keys[pg.K_RALT]:
+            if event.key == pg.K_LEFT:
+                if 0 <= selected_entry_in_wave_idx < len(current_wave_edit_buffer['units']):
+                    entry = current_wave_edit_buffer['units'][selected_entry_in_wave_idx]
+                    entry[2] = max(0.0, round(entry[2] - 0.1, 1))
+                    set_status_message(f"Unit entry delay after group: {entry[2]:.1f}s")
+            elif event.key == pg.K_RIGHT:
+                if 0 <= selected_entry_in_wave_idx < len(current_wave_edit_buffer['units']):
+                    entry = current_wave_edit_buffer['units'][selected_entry_in_wave_idx]
+                    entry[2] = round(entry[2] + 0.1, 1)
+                    set_status_message(f"Unit entry delay after group: {entry[2]:.1f}s")
+        
+        elif keys[pg.K_LSHIFT] or keys[pg.K_RSHIFT]:
+            if event.key == pg.K_LEFT:
+                if 0 <= selected_entry_in_wave_idx < len(current_wave_edit_buffer['units']):
+                    entry = current_wave_edit_buffer['units'][selected_entry_in_wave_idx]
+                    entry[3] = max(0, entry[3] - 50)
+                    set_status_message(f"Unit entry inter-spawn delay: {entry[3]}ms")
+            elif event.key == pg.K_RIGHT:
+                if 0 <= selected_entry_in_wave_idx < len(current_wave_edit_buffer['units']):
+                    entry = current_wave_edit_buffer['units'][selected_entry_in_wave_idx]
+                    entry[3] += 50
+                    set_status_message(f"Unit entry inter-spawn delay: {entry[3]}ms")
+
+        elif event.key == pg.K_BACKSPACE:
+            if 0 <= selected_entry_in_wave_idx < len(current_wave_edit_buffer['units']):
+                removed_entry = current_wave_edit_buffer['units'].pop(selected_entry_in_wave_idx)
+                set_status_message(f"Removed entry: ID {removed_entry[0]} x{removed_entry[1]}")
+                if not current_wave_edit_buffer['units']:
+                    selected_entry_in_wave_idx = -1
+                elif selected_entry_in_wave_idx >= len(current_wave_edit_buffer['units']):
+                    selected_entry_in_wave_idx = len(current_wave_edit_buffer['units']) - 1
+            else:
+                set_status_message("No unit entry selected to remove.")
 
     clock.tick(30)
 
