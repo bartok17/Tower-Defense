@@ -255,182 +255,187 @@ while running:
         if event.type == pg.QUIT:
             running = False
         elif event.type == pg.KEYDOWN:
-            if event.key == pg.K_ESCAPE:
-                running = False
-            elif event.key == pg.K_UP:
-                current_wave_edit_buffer['id'] = max(1, current_wave_edit_buffer['id'] + 1)
-            elif event.key == pg.K_DOWN:
-                current_wave_edit_buffer['id'] = max(1, current_wave_edit_buffer['id'] - 1)
-            elif event.key == pg.K_q:
-                current_wave_edit_buffer['P_time'] = max(0, current_wave_edit_buffer['P_time'] - 1)
-            elif event.key == pg.K_w:
-                current_wave_edit_buffer['P_time'] += 1
-            elif event.key == pg.K_e:
-                current_wave_edit_buffer['inter_wave_delay'] = max(0, current_wave_edit_buffer['inter_wave_delay'] - 1)
-            elif event.key == pg.K_r:
-                current_wave_edit_buffer['inter_wave_delay'] += 1
-            elif event.key == pg.K_t:
-                current_wave_edit_buffer['mode'] = max(0, current_wave_edit_buffer['mode'] - 1)
-            elif event.key == pg.K_y:
-                current_wave_edit_buffer['mode'] += 1
-            elif event.key == pg.K_u:
-                current_wave_edit_buffer['passive_gold'] = max(0, current_wave_edit_buffer['passive_gold'] - 5)
-            elif event.key == pg.K_i:
-                current_wave_edit_buffer['passive_gold'] += 5
-            elif event.key == pg.K_j:
-                current_wave_edit_buffer['passive_wood'] = max(0, current_wave_edit_buffer['passive_wood'] - 5)
-            elif event.key == pg.K_k:
-                current_wave_edit_buffer['passive_wood'] += 5
-            elif event.key == pg.K_o:
-                current_wave_edit_buffer['passive_metal'] = max(0, current_wave_edit_buffer['passive_metal'] - 5)
-            elif event.key == pg.K_p:
-                current_wave_edit_buffer['passive_metal'] += 5
-            elif event.key == pg.K_TAB:
-                selected_unit_idx = (selected_unit_idx + 1) % len(available_units_for_selection)
-            elif event.key == pg.K_s:
-                available_units_for_selection[selected_unit_idx]['number'] = max(1, available_units_for_selection[selected_unit_idx]['number'] - 1)
-            elif event.key == pg.K_d:
-                available_units_for_selection[selected_unit_idx]['number'] += 1
-            elif event.key == pg.K_a:
-                selected_unit_info = available_units_for_selection[selected_unit_idx]
-                unit_id_to_add = selected_unit_info['unit_id']
-                num_to_add = selected_unit_info['number']
-                current_wave_edit_buffer['units'].append([unit_id_to_add, num_to_add, 1.0, DEFAULT_INTER_ENEMY_SPAWN_DELAY_MS])
-                selected_entry_in_wave_idx = len(current_wave_edit_buffer['units']) - 1
-                set_status_message(f"Added {num_to_add} of Unit ID {unit_id_to_add} as new entry.")
-            elif event.key == pg.K_x:
-                unit_id_to_remove = available_units_for_selection[selected_unit_idx]['unit_id']
-                initial_len = len(current_wave_edit_buffer['units'])
-                current_wave_edit_buffer['units'] = [u for u in current_wave_edit_buffer['units'] if u[0] != unit_id_to_remove]
-                if len(current_wave_edit_buffer['units']) < initial_len:
-                    set_status_message(f"Removed Unit ID {unit_id_to_remove} from wave buffer.")
-                else:
-                    set_status_message(f"Unit ID {unit_id_to_remove} not in wave buffer.")
-            elif event.key == pg.K_F1:
-                active_wave_id = None 
-                current_wave_edit_buffer = get_default_wave_template()
-                selected_entry_in_wave_idx = -1
-                if all_waves_in_file:
-                    next_id_val = max((int(k) for k in all_waves_in_file.keys()), default=0) + 1
-                else:
-                    next_id_val = 1
-                current_wave_edit_buffer['id'] = next_id_val
-                set_status_message(f"Cleared buffer for new wave. Suggested ID: {next_id_val}")
-            elif event.key == pg.K_F2:
-                pg.display.iconify()
-                try:
-                    load_id_str = input(f"Enter Wave ID to load from memory (Available: {', '.join(sorted(all_waves_in_file.keys(), key=int))}): ").strip()
-                    if load_id_str in all_waves_in_file:
-                        active_wave_id = int(load_id_str)
-                        current_wave_edit_buffer = dict(all_waves_in_file[load_id_str])
-                        if current_wave_edit_buffer.get("units"):
-                            selected_entry_in_wave_idx = 0
-                        else:
-                            selected_entry_in_wave_idx = -1
-                        set_status_message(f"Loaded Wave ID {active_wave_id} into buffer.")
-                    else:
-                        set_status_message(f"Error: Wave ID {load_id_str} not found in memory for this file.")
-                except Exception as e:
-                    set_status_message(f"Error during load: {e}")
-            elif event.key == pg.K_RETURN:
-                editor_wave_id = current_wave_edit_buffer['id']
-                editor_wave_id_str = str(editor_wave_id)
-                if active_wave_id is not None and active_wave_id != editor_wave_id:
-                    if editor_wave_id_str in all_waves_in_file:
-                        set_status_message(f"Error: Target ID {editor_wave_id} already exists. Cannot change ID to this.")
-                        current_wave_edit_buffer['id'] = active_wave_id
-                    else:
-                        if str(active_wave_id) in all_waves_in_file:
-                            del all_waves_in_file[str(active_wave_id)]
-                        all_waves_in_file[editor_wave_id_str] = dict(current_wave_edit_buffer)
-                        active_wave_id = editor_wave_id 
-                        set_status_message(f"Wave ID changed to {editor_wave_id_str} and saved to memory.")
-                elif editor_wave_id_str in all_waves_in_file and active_wave_id is None:
-                    set_status_message(f"Error: ID {editor_wave_id_str} already exists. Choose a different ID for this new wave.")
-                else:
-                    all_waves_in_file[editor_wave_id_str] = dict(current_wave_edit_buffer)
-                    active_wave_id = editor_wave_id
-                    set_status_message(f"Wave ID {editor_wave_id_str} saved/updated in memory.")
-            elif event.key == pg.K_DELETE:
-                if active_wave_id is not None:
-                    wave_id_to_delete_str = str(active_wave_id)
-                    if wave_id_to_delete_str in all_waves_in_file:
-                        del all_waves_in_file[wave_id_to_delete_str]
-                        set_status_message(f"Deleted Wave ID {wave_id_to_delete_str} from memory.")
-                        active_wave_id = None
-                        current_wave_edit_buffer = get_default_wave_template()
-                        selected_entry_in_wave_idx = -1
-                        if all_waves_in_file:
-                            current_wave_edit_buffer['id'] = max((int(k) for k in all_waves_in_file.keys()), default=0) + 1
-                        else:
-                            current_wave_edit_buffer['id'] = 1
-                    else:
-                        set_status_message(f"Error: Active Wave ID {active_wave_id} not in memory (should not happen).")
-                else:
-                    set_status_message("No active wave loaded to delete. Buffer is for a new wave.")
-            elif event.key == pg.K_F12:
-                try:
-                    with open(current_wave_file_path, "w") as f:
-                        json.dump(all_waves_in_file, f, indent=2)
-                    set_status_message(f"All waves saved to file: {os.path.basename(current_wave_file_path)}")
-                except Exception as e:
-                    set_status_message(f"Error saving to file: {e}")
-
-        # Entry selection and editing
-        elif keys[pg.K_LCTRL] or keys[pg.K_RCTRL]:
-            if event.key == pg.K_UP:
-                if current_wave_edit_buffer['units']:
-                    selected_entry_in_wave_idx = max(0, selected_entry_in_wave_idx - 1)
-                    set_status_message(f"Selected entry index: {selected_entry_in_wave_idx}")
-            elif event.key == pg.K_DOWN:
-                if current_wave_edit_buffer['units']:
-                    selected_entry_in_wave_idx = min(len(current_wave_edit_buffer['units']) - 1, selected_entry_in_wave_idx + 1)
-                    set_status_message(f"Selected entry index: {selected_entry_in_wave_idx}")
-            elif event.key == pg.K_LEFT:
-                if 0 <= selected_entry_in_wave_idx < len(current_wave_edit_buffer['units']):
-                    entry = current_wave_edit_buffer['units'][selected_entry_in_wave_idx]
-                    entry[1] = max(1, entry[1] - 1)
-                    set_status_message(f"Unit entry count: {entry[1]}")
-            elif event.key == pg.K_RIGHT:
-                if 0 <= selected_entry_in_wave_idx < len(current_wave_edit_buffer['units']):
-                    entry = current_wave_edit_buffer['units'][selected_entry_in_wave_idx]
-                    entry[1] += 1
-                    set_status_message(f"Unit entry count: {entry[1]}")
-
-        elif keys[pg.K_LALT] or keys[pg.K_RALT]:
-            if event.key == pg.K_LEFT:
-                if 0 <= selected_entry_in_wave_idx < len(current_wave_edit_buffer['units']):
-                    entry = current_wave_edit_buffer['units'][selected_entry_in_wave_idx]
-                    entry[2] = max(0.0, round(entry[2] - 0.1, 1))
-                    set_status_message(f"Unit entry delay after group: {entry[2]:.1f}s")
-            elif event.key == pg.K_RIGHT:
-                if 0 <= selected_entry_in_wave_idx < len(current_wave_edit_buffer['units']):
-                    entry = current_wave_edit_buffer['units'][selected_entry_in_wave_idx]
-                    entry[2] = round(entry[2] + 0.1, 1)
-                    set_status_message(f"Unit entry delay after group: {entry[2]:.1f}s")
-        
-        elif keys[pg.K_LSHIFT] or keys[pg.K_RSHIFT]:
-            if event.key == pg.K_LEFT:
-                if 0 <= selected_entry_in_wave_idx < len(current_wave_edit_buffer['units']):
-                    entry = current_wave_edit_buffer['units'][selected_entry_in_wave_idx]
-                    entry[3] = max(0, entry[3] - 50)
-                    set_status_message(f"Unit entry inter-spawn delay: {entry[3]}ms")
-            elif event.key == pg.K_RIGHT:
-                if 0 <= selected_entry_in_wave_idx < len(current_wave_edit_buffer['units']):
-                    entry = current_wave_edit_buffer['units'][selected_entry_in_wave_idx]
-                    entry[3] += 50
-                    set_status_message(f"Unit entry inter-spawn delay: {entry[3]}ms")
-
-        elif event.key == pg.K_BACKSPACE:
-            if 0 <= selected_entry_in_wave_idx < len(current_wave_edit_buffer['units']):
-                removed_entry = current_wave_edit_buffer['units'].pop(selected_entry_in_wave_idx)
-                set_status_message(f"Removed entry: ID {removed_entry[0]} x{removed_entry[1]}")
-                if not current_wave_edit_buffer['units']:
-                    selected_entry_in_wave_idx = -1
-                elif selected_entry_in_wave_idx >= len(current_wave_edit_buffer['units']):
-                    selected_entry_in_wave_idx = len(current_wave_edit_buffer['units']) - 1
+            # First, check for modifier key combinations
+            if keys[pg.K_LCTRL] or keys[pg.K_RCTRL]:
+                if event.key == pg.K_UP:
+                    if current_wave_edit_buffer['units']:
+                        selected_entry_in_wave_idx = max(0, selected_entry_in_wave_idx - 1)
+                        set_status_message(f"Selected entry index: {selected_entry_in_wave_idx}")
+                elif event.key == pg.K_DOWN:
+                    if current_wave_edit_buffer['units']:
+                        selected_entry_in_wave_idx = min(len(current_wave_edit_buffer['units']) - 1, selected_entry_in_wave_idx + 1)
+                        set_status_message(f"Selected entry index: {selected_entry_in_wave_idx}")
+                elif event.key == pg.K_LEFT:
+                    if 0 <= selected_entry_in_wave_idx < len(current_wave_edit_buffer['units']):
+                        entry = current_wave_edit_buffer['units'][selected_entry_in_wave_idx]
+                        entry[1] = max(1, entry[1] - 1)
+                        set_status_message(f"Unit entry count: {entry[1]}")
+                elif event.key == pg.K_RIGHT:
+                    if 0 <= selected_entry_in_wave_idx < len(current_wave_edit_buffer['units']):
+                        entry = current_wave_edit_buffer['units'][selected_entry_in_wave_idx]
+                        entry[1] += 1
+                        set_status_message(f"Unit entry count: {entry[1]}")
+            
+            elif keys[pg.K_LALT] or keys[pg.K_RALT]:
+                if event.key == pg.K_LEFT:
+                    if 0 <= selected_entry_in_wave_idx < len(current_wave_edit_buffer['units']):
+                        entry = current_wave_edit_buffer['units'][selected_entry_in_wave_idx]
+                        entry[2] = max(0.0, round(entry[2] - 0.1, 1))
+                        set_status_message(f"Unit entry delay after group: {entry[2]:.1f}s")
+                elif event.key == pg.K_RIGHT:
+                    if 0 <= selected_entry_in_wave_idx < len(current_wave_edit_buffer['units']):
+                        entry = current_wave_edit_buffer['units'][selected_entry_in_wave_idx]
+                        entry[2] = round(entry[2] + 0.1, 1)
+                        set_status_message(f"Unit entry delay after group: {entry[2]:.1f}s")
+            
+            elif keys[pg.K_LSHIFT] or keys[pg.K_RSHIFT]:
+                if event.key == pg.K_LEFT:
+                    if 0 <= selected_entry_in_wave_idx < len(current_wave_edit_buffer['units']):
+                        entry = current_wave_edit_buffer['units'][selected_entry_in_wave_idx]
+                        entry[3] = max(0, entry[3] - 50)
+                        set_status_message(f"Unit entry inter-spawn delay: {entry[3]}ms")
+                elif event.key == pg.K_RIGHT:
+                    if 0 <= selected_entry_in_wave_idx < len(current_wave_edit_buffer['units']):
+                        entry = current_wave_edit_buffer['units'][selected_entry_in_wave_idx]
+                        entry[3] += 50
+                        set_status_message(f"Unit entry inter-spawn delay: {entry[3]}ms")
+            
+            # If no modifier combination handled the event, process regular key presses
             else:
-                set_status_message("No unit entry selected to remove.")
+                if event.key == pg.K_ESCAPE:
+                    running = False
+                elif event.key == pg.K_UP:
+                    current_wave_edit_buffer['id'] = max(1, current_wave_edit_buffer['id'] + 1)
+                elif event.key == pg.K_DOWN:
+                    current_wave_edit_buffer['id'] = max(1, current_wave_edit_buffer['id'] - 1)
+                elif event.key == pg.K_q:
+                    current_wave_edit_buffer['P_time'] = max(0, current_wave_edit_buffer['P_time'] - 1)
+                elif event.key == pg.K_w:
+                    current_wave_edit_buffer['P_time'] += 1
+                elif event.key == pg.K_e:
+                    current_wave_edit_buffer['inter_wave_delay'] = max(0, current_wave_edit_buffer['inter_wave_delay'] - 1)
+                elif event.key == pg.K_r:
+                    current_wave_edit_buffer['inter_wave_delay'] += 1
+                elif event.key == pg.K_t:
+                    current_wave_edit_buffer['mode'] = max(0, current_wave_edit_buffer['mode'] - 1)
+                elif event.key == pg.K_y:
+                    current_wave_edit_buffer['mode'] += 1
+                elif event.key == pg.K_u:
+                    current_wave_edit_buffer['passive_gold'] = max(0, current_wave_edit_buffer['passive_gold'] - 5)
+                elif event.key == pg.K_i:
+                    current_wave_edit_buffer['passive_gold'] += 5
+                elif event.key == pg.K_j:
+                    current_wave_edit_buffer['passive_wood'] = max(0, current_wave_edit_buffer['passive_wood'] - 5)
+                elif event.key == pg.K_k:
+                    current_wave_edit_buffer['passive_wood'] += 5
+                elif event.key == pg.K_o:
+                    current_wave_edit_buffer['passive_metal'] = max(0, current_wave_edit_buffer['passive_metal'] - 5)
+                elif event.key == pg.K_p:
+                    current_wave_edit_buffer['passive_metal'] += 5
+                elif event.key == pg.K_TAB:
+                    selected_unit_idx = (selected_unit_idx + 1) % len(available_units_for_selection)
+                elif event.key == pg.K_s:
+                    available_units_for_selection[selected_unit_idx]['number'] = max(1, available_units_for_selection[selected_unit_idx]['number'] - 1)
+                elif event.key == pg.K_d:
+                    available_units_for_selection[selected_unit_idx]['number'] += 1
+                elif event.key == pg.K_a:
+                    selected_unit_info = available_units_for_selection[selected_unit_idx]
+                    unit_id_to_add = selected_unit_info['unit_id']
+                    num_to_add = selected_unit_info['number']
+                    current_wave_edit_buffer['units'].append([unit_id_to_add, num_to_add, 1.0, DEFAULT_INTER_ENEMY_SPAWN_DELAY_MS])
+                    selected_entry_in_wave_idx = len(current_wave_edit_buffer['units']) - 1
+                    set_status_message(f"Added {num_to_add} of Unit ID {unit_id_to_add} as new entry.")
+                elif event.key == pg.K_x:
+                    unit_id_to_remove = available_units_for_selection[selected_unit_idx]['unit_id']
+                    initial_len = len(current_wave_edit_buffer['units'])
+                    current_wave_edit_buffer['units'] = [u for u in current_wave_edit_buffer['units'] if u[0] != unit_id_to_remove]
+                    if len(current_wave_edit_buffer['units']) < initial_len:
+                        set_status_message(f"Removed Unit ID {unit_id_to_remove} from wave buffer.")
+                        if not current_wave_edit_buffer['units']:
+                            selected_entry_in_wave_idx = -1
+                        elif selected_entry_in_wave_idx >= len(current_wave_edit_buffer['units']):
+                             selected_entry_in_wave_idx = len(current_wave_edit_buffer['units']) -1 if current_wave_edit_buffer['units'] else -1
+                    else:
+                        set_status_message(f"Unit ID {unit_id_to_remove} not in wave buffer.")
+                elif event.key == pg.K_F1:
+                    active_wave_id = None 
+                    current_wave_edit_buffer = get_default_wave_template()
+                    selected_entry_in_wave_idx = -1
+                    if all_waves_in_file:
+                        next_id_val = max((int(k) for k in all_waves_in_file.keys()), default=0) + 1
+                    else:
+                        next_id_val = 1
+                    current_wave_edit_buffer['id'] = next_id_val
+                    set_status_message(f"Cleared buffer for new wave. Suggested ID: {next_id_val}")
+                elif event.key == pg.K_F2:
+                    pg.display.iconify()
+                    try:
+                        load_id_str = input(f"Enter Wave ID to load from memory (Available: {', '.join(sorted(all_waves_in_file.keys(), key=int))}): ").strip()
+                        if load_id_str in all_waves_in_file:
+                            active_wave_id = int(load_id_str)
+                            current_wave_edit_buffer = dict(all_waves_in_file[load_id_str])
+                            if current_wave_edit_buffer.get("units"):
+                                selected_entry_in_wave_idx = 0
+                            else:
+                                selected_entry_in_wave_idx = -1
+                            set_status_message(f"Loaded Wave ID {active_wave_id} into buffer.")
+                        else:
+                            set_status_message(f"Error: Wave ID {load_id_str} not found in memory for this file.")
+                    except Exception as e:
+                        set_status_message(f"Error during load: {e}")
+                elif event.key == pg.K_RETURN:
+                    editor_wave_id = current_wave_edit_buffer['id']
+                    editor_wave_id_str = str(editor_wave_id)
+                    if active_wave_id is not None and active_wave_id != editor_wave_id:
+                        if editor_wave_id_str in all_waves_in_file:
+                            set_status_message(f"Error: Target ID {editor_wave_id} already exists. Cannot change ID to this.")
+                            current_wave_edit_buffer['id'] = active_wave_id
+                        else:
+                            if str(active_wave_id) in all_waves_in_file:
+                                del all_waves_in_file[str(active_wave_id)]
+                            all_waves_in_file[editor_wave_id_str] = dict(current_wave_edit_buffer)
+                            active_wave_id = editor_wave_id 
+                            set_status_message(f"Wave ID changed to {editor_wave_id_str} and saved to memory.")
+                    elif editor_wave_id_str in all_waves_in_file and active_wave_id is None:
+                        set_status_message(f"Error: ID {editor_wave_id_str} already exists. Choose a different ID for this new wave.")
+                    else:
+                        all_waves_in_file[editor_wave_id_str] = dict(current_wave_edit_buffer)
+                        active_wave_id = editor_wave_id
+                        set_status_message(f"Wave ID {editor_wave_id_str} saved/updated in memory.")
+                elif event.key == pg.K_DELETE:
+                    if active_wave_id is not None:
+                        wave_id_to_delete_str = str(active_wave_id)
+                        if wave_id_to_delete_str in all_waves_in_file:
+                            del all_waves_in_file[wave_id_to_delete_str]
+                            set_status_message(f"Deleted Wave ID {wave_id_to_delete_str} from memory.")
+                            active_wave_id = None
+                            current_wave_edit_buffer = get_default_wave_template()
+                            selected_entry_in_wave_idx = -1
+                            if all_waves_in_file:
+                                current_wave_edit_buffer['id'] = max((int(k) for k in all_waves_in_file.keys()), default=0) + 1
+                            else:
+                                current_wave_edit_buffer['id'] = 1
+                        else:
+                            set_status_message(f"Error: Active Wave ID {active_wave_id} not in memory (should not happen).")
+                    else:
+                        set_status_message("No active wave loaded to delete. Buffer is for a new wave.")
+                elif event.key == pg.K_F12:
+                    try:
+                        with open(current_wave_file_path, "w") as f:
+                            json.dump(all_waves_in_file, f, indent=2)
+                        set_status_message(f"All waves saved to file: {os.path.basename(current_wave_file_path)}")
+                    except Exception as e:
+                        set_status_message(f"Error saving to file: {e}")
+                elif event.key == pg.K_BACKSPACE:
+                    if 0 <= selected_entry_in_wave_idx < len(current_wave_edit_buffer['units']):
+                        removed_entry = current_wave_edit_buffer['units'].pop(selected_entry_in_wave_idx)
+                        set_status_message(f"Removed entry: ID {removed_entry[0]} x{removed_entry[1]}")
+                        if not current_wave_edit_buffer['units']:
+                            selected_entry_in_wave_idx = -1
+                        elif selected_entry_in_wave_idx >= len(current_wave_edit_buffer['units']):
+                            selected_entry_in_wave_idx = len(current_wave_edit_buffer['units']) - 1
+                    else:
+                        set_status_message("No unit entry selected to remove.")
 
     clock.tick(30)
 

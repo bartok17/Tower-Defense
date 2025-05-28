@@ -94,6 +94,7 @@ def update_enemies(clock_tick, enemies_list, base, resources_manager):
         if enemy.has_finished():
             resources_manager.spend_resource("health", 10)
             enemies_list.remove(enemy)
+            continue 
         if enemy.is_dead():
             enemies_list.remove(enemy)
             resources_manager.add_resource("gold", enemy.gold_reward) 

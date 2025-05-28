@@ -46,7 +46,7 @@
     "health": 10,
     "speed": 2,
     "armor": 1,
-    "damage": 1,
+    "damage": 2,
     "magic_resistance": 1,
     "attack_range": 50,
     "attack_speed": 1.0,
@@ -57,11 +57,30 @@
     ],
     "radius": 10,
     "abilities": [
-      "ranged",
-      "fast",
-      "tank"
+      
     ],
-    "gold_reward": 15,
-    "shape": "circle"
+    "gold_reward": 5,
+    "shape": "triangle"
+  },
+  "4": {
+    "id": 4,
+    "health": 120,
+    "speed": 0.3,
+    "armor": 5,
+    "damage": 2,
+    "magic_resistance": 5,
+    "attack_range": 50,
+    "attack_speed": 1.0,
+    "color": [
+      255,
+      0,
+      255
+    ],
+    "radius": 10,
+    "abilities": [
+      
+    ],
+    "gold_reward": 50,
+    "shape": "triangle"
   }
 }
