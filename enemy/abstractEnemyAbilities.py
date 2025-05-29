@@ -3,6 +3,7 @@ from math import inf
 import random
 import os
 import constants as root_project_constants 
+import pygame as pg
 
 _loaded_enemy_templates = None
 

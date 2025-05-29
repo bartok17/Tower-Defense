@@ -80,10 +80,7 @@ def load_assets(level_config):
 
     factory_buttons = []
     tower_buttons = []
-    # Button positioning can remain similar, but will now use the filtered blueprints
-    # Assuming UserInterface or button drawing logic handles positioning dynamically or you adjust here
-    # For simplicity, this example keeps the original button creation loop structure
-    # but iterates over the filtered `level_tower_blueprints`.
+
 
     for i, blueprint in enumerate(factory_blueprints): # Factories are not level-restricted in this example
         btn = Button(0, 0, blueprint.image, blueprint.name, width=blueprint.width, height=blueprint.height, )
@@ -304,8 +301,11 @@ def run_game_loop(screen, clock, selected_level_config):
     )
     bm.factories.clear()
     bm.towers.clear()
+    bm.building_rects.clear() # Ensure this line was added from previous advice
 
     level_was_won = False
+    show_fps = False # Variable to toggle FPS display
+    fps_font = pg.font.Font(None, 30) # Font for FPS display
 
     while game_state_internal == "running":
         clock_tick = clock.tick(con.FPS)
@@ -370,6 +370,8 @@ def run_game_loop(screen, clock, selected_level_config):
                         selected_blueprint = None
                     else:
                         is_paused = not is_paused
+                if event.key == pg.K_f: # Toggle FPS display
+                    show_fps = not show_fps
         if game_state_internal == "quit_to_menu":
             return GameState.MAIN_MENU, level_was_won # Return to main menu if quit event occurs
 
@@ -427,7 +429,7 @@ def run_game_loop(screen, clock, selected_level_config):
         update_enemies(clock_tick, enemies_list, base, resources_manager)
         update_towers(clock_tick, bm.towers, enemies_list, waypoints, projectiles)
         update_projectiles(clock_tick, projectiles, enemies_list)
-        abilities.update(enemies_list, clock.tick(con.FPS) / 1000.0)
+        abilities.update(enemies_list, clock_tick / 1000.0)
 
         if resources_manager.get_resource("health") <= 0:
             game_state_internal = "game_over"
@@ -448,6 +450,11 @@ def run_game_loop(screen, clock, selected_level_config):
         elif current_wave_index >= len(waves_data_list) and game_state_internal == "running":
              all_waves_cleared_text = pg.font.Font(None, 40).render("Level Cleared!", True, (0,255,0))
              screen.blit(all_waves_cleared_text, (con.SCREEN_WIDTH // 2 - all_waves_cleared_text.get_width() // 2, con.SCREEN_HEIGHT - 60))
+        
+        if show_fps:
+            fps_text = fps_font.render(f"FPS: {clock.get_fps():.2f}", True, pg.Color("white"))
+            screen.blit(fps_text, (10, screen.get_height() - 30)) # Display FPS at bottom-left
+
         abilities.draw(screen)
         ui.draw_pause_button(screen)
         pg.display.update()
