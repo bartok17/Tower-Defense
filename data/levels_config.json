@@ -9,7 +9,8 @@
         "unlocked": true,
         "start_gold": 200,
         "start_wood": 100,
-        "start_metal": 50
+        "start_metal": 50,
+        "available_towers": ["basic", "rapid"]
     },
     {
         "id": "level2",
@@ -21,7 +22,8 @@
         "unlocked": true,
         "start_gold": 250,
         "start_wood": 100,
-        "start_metal": 50
+        "start_metal": 50,
+        "available_towers": ["basic", "sniper", "cannon", "rapid"]
     },
     {
         "id": "level3",
@@ -33,7 +35,8 @@
         "unlocked": false,
         "start_gold": 300,
         "start_wood": 100,
-        "start_metal": 50
+        "start_metal": 50,
+        "available_towers": ["basic", "rapid", "sniper", "cannon", "flame", "ice"]
     }
     
 ]

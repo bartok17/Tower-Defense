@@ -56,30 +56,43 @@ def load_assets(level_config):
         BuildingBlueprint("Wood Factory", factory_wood_img, {"gold": 40}, 40, 40,
                           bm.build_factory, resource="wood", payout_per_wave=15),
     ]
-    tower_blueprints = [        BuildingBlueprint("Tower - basic", tower_basic_img, {"gold": 50}, 40, 40,
-                          bm.build_tower, tower_type="basic"),
-        BuildingBlueprint("Tower - cannon", tower_cannon_img, {"gold": 150, "wood": 70,"metal":20}, 40, 40,
-                          bm.build_tower, tower_type="cannon"),
-        BuildingBlueprint("Tower - flame", tower_flame_img, {"gold": 200, "wood": 100}, 40, 40,
-                          bm.build_tower, tower_type="flame"),
-        BuildingBlueprint("Tower - rapid", tower_rapid_img, {"gold": 150,"wood": 20}, 40, 40,
-                          bm.build_tower, tower_type="rapid"),
-        BuildingBlueprint("Tower - sniper", tower_sniper_img, {"gold": 200, "metal": 10}, 40, 40,
-                          bm.build_tower, tower_type="sniper"),
+
+    # Master list of all possible tower blueprints
+    all_tower_blueprints_data = [
+        {"name": "Tower - basic", "image": tower_basic_img, "cost": {"gold": 50}, "width": 40, "height": 40, "build_function": bm.build_tower, "tower_type": "basic"},
+        {"name": "Tower - cannon", "image": tower_cannon_img, "cost": {"gold": 150, "wood": 70, "metal": 20}, "width": 40, "height": 40, "build_function": bm.build_tower, "tower_type": "cannon"},
+        {"name": "Tower - flame", "image": tower_flame_img, "cost": {"gold": 200, "wood": 100}, "width": 40, "height": 40, "build_function": bm.build_tower, "tower_type": "flame"},
+        {"name": "Tower - rapid", "image": tower_rapid_img, "cost": {"gold": 150, "wood": 20}, "width": 40, "height": 40, "build_function": bm.build_tower, "tower_type": "rapid"},
+        {"name": "Tower - sniper", "image": tower_sniper_img, "cost": {"gold": 200, "metal": 10}, "width": 40, "height": 40, "build_function": bm.build_tower, "tower_type": "sniper"},
     ]
+
+    level_tower_blueprints = []
+    available_tower_types = level_config.get("available_towers", []) # Get allowed types, default to empty list
+
+    for data in all_tower_blueprints_data:
+        if data["tower_type"] in available_tower_types:
+            level_tower_blueprints.append(
+                BuildingBlueprint(data["name"], data["image"], data["cost"], data["width"], data["height"],
+                                  data["build_function"], tower_type=data["tower_type"])
+            )
+
     factory_buttons = []
     tower_buttons = []
-    button_start_y = 50
-    button_spacing = 60
-    for i, blueprint in enumerate(factory_blueprints):
-        btn = Button(0, 0, blueprint.image, blueprint.name, width=blueprint.width, height=blueprint.height, )
+    # Button positioning can remain similar, but will now use the filtered blueprints
+    # Assuming UserInterface or button drawing logic handles positioning dynamically or you adjust here
+    # For simplicity, this example keeps the original button creation loop structure
+    # but iterates over the filtered `level_tower_blueprints`.
 
+    for i, blueprint in enumerate(factory_blueprints): # Factories are not level-restricted in this example
+        btn = Button(0, 0, blueprint.image, blueprint.name, width=blueprint.width, height=blueprint.height, )
         factory_buttons.append(btn)
 
-    for i, blueprint in enumerate(tower_blueprints):
+    for i, blueprint in enumerate(level_tower_blueprints):
+        # You might want to adjust button positioning if the number of towers changes significantly
         btn = Button(con.SCREEN_WIDTH - 80, 50 + i * 60, blueprint.image, blueprint.name, width=blueprint.width, height=blueprint.height)
         tower_buttons.append(btn)
-    return map_img, button_img, waypoints, factory_buttons, factory_blueprints, tower_buttons, tower_blueprints
+        
+    return map_img, button_img, waypoints, factory_buttons, factory_blueprints, tower_buttons, level_tower_blueprints # Return filtered tower blueprints
 
 def draw_waypoints(screen, waypoints):
     for name, road in waypoints.items():
