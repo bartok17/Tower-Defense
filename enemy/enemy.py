@@ -68,10 +68,18 @@ class Enemy:
         elif self.shape == "triangle":
             # Using the consistent shape_surface approach from 0c06ff3f
             points = [
-                (self.radius, 0),
-                (0, self.radius * 2),
-                (self.radius * 2, self.radius * 2)
+            (self.radius, 0),
+            (0, self.radius * 2),
+            (self.radius * 2, self.radius * 2)
             ]
+            pg.draw.polygon(shape_surface, (r, g, b, draw_alpha), points)
+        elif self.shape == "hexagon":
+            points = []
+            for i in range(6):
+                angle_rad = i * math.pi / 3 
+                x = self.radius + self.radius * math.cos(angle_rad)
+                y = self.radius + self.radius * math.sin(angle_rad) # Pygame's y-axis is downwards
+                points.append((x, y))
             pg.draw.polygon(shape_surface, (r, g, b, draw_alpha), points)
         
         map_surface.blit(shape_surface, (self.pos.x - self.radius, self.pos.y - self.radius))
