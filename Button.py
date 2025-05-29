@@ -1,7 +1,7 @@
 import pygame as pg
 
 class Button():
-  def __init__(self, x, y, image, text="", text_color=(0,0,0), font_size=24,
+  def __init__(self, x, y, image, label=None, text="", text_color=(0,0,0), font_size=24,
                font_name=None, width=None, height=None, color=(200,200,200),
                click_and_hold=False):
 
@@ -9,7 +9,9 @@ class Button():
     self.y = y
     self.click_and_hold = click_and_hold
     self.clicked = False 
-
+    self.hover_progress = 0.0
+    self.hover_speed = 0.1
+    self.label = label
     # Determine the final image for the button
     if image:
         self.image = image
@@ -75,3 +77,8 @@ class Button():
     typically after a MOUSEBUTTONDOWN event has been detected.
     """
     return self.rect.collidepoint(pos)
+  def update_hover(self, is_hovered):
+    if is_hovered:
+        self.hover_progress = min(1.0, self.hover_progress + self.hover_speed)
+    else:
+        self.hover_progress = max(0.0, self.hover_progress - self.hover_speed)

@@ -27,8 +27,13 @@ class Factory:
         return self.resource_type, self.production_rate
 
     def draw(self, surface):
+        x, y = self.position
+
         if self.image:
-            surface.blit(self.image, self.position)
+            surface.blit(self.image, (x, y))
+            w, h = self.image.get_size()
         else:
-            # Fallback: draw blue square if image is missing
-            pg.draw.rect(surface, (0,0,255), (self.position[0], self.position[1], 40, 40))
+            pg.draw.rect(surface, (100, 100, 100), (x, y, 40, 40)) 
+        pg.draw.rect(surface, (255, 255, 255), (x, y, w, h), width=2, border_radius=4)
+
+

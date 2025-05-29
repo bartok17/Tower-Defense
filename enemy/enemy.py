@@ -1,5 +1,6 @@
 import pygame as pg
-import math
+import math # Kept from HEAD
+import enemy.abstractEnemyAbilities as aea # Kept from 0c06ff3f
 from enemy.abilities import Abilities
 
 class Enemy:
@@ -29,11 +30,12 @@ class Enemy:
         self.color = tuple(template.get("color", [255, 255, 255]))
         self.radius = template.get("radius", 10)
         self.shape = template.get("shape", "circle")
+        self.special_texts = []
         self.incoming_damage = 0
         self.gold_reward = template.get("gold_reward", 5)
 
-    def update(self):
-        # Move towards the next waypoint
+    def update(self, clock_tick=0): # Signature from 0c06ff3f
+        # Move towards the next waypoint (comment from HEAD, functionality in both)
         if self.curr_waypoint + 1 < len(self.waypoints):
             next_target = pg.Vector2(self.waypoints[self.curr_waypoint + 1])
             direction = (next_target - self.pos).normalize()
@@ -41,32 +43,46 @@ class Enemy:
             if self.pos.distance_to(next_target) < self.speed:
                 self.pos = next_target
                 self.curr_waypoint += 1
+        
+        # Functionality from 0c06ff3f
+        if self.abilities:
+            self.abilities.update_all(self, clock_tick)
+        for ft in self.special_texts[:]:
+            ft["lifetime"] -= clock_tick / 1000.0
+            ft["pos"].y -= 0.2 
+            if ft["lifetime"] <= 0: self.special_texts.remove(ft)
 
     def draw(self, map_surface):
         # Draw the enemy based on its shape
         r, g, b = self.color
+        draw_alpha = 255
+        # Functionality from 0c06ff3f (uses aea import)
+        if self.has_ability(aea.invisibleAbility):
+            draw_alpha = 60
+
+        shape_surface = pg.Surface((self.radius * 2, self.radius * 2), pg.SRCALPHA)
         if self.shape == "circle":
-            pg.draw.circle(map_surface, (r, g, b), (int(self.pos.x), int(self.pos.y)), self.radius)
+            pg.draw.circle(shape_surface, (r, g, b, draw_alpha), (self.radius, self.radius), self.radius)
         elif self.shape == "square":
-            rect = pg.Rect(self.pos.x - self.radius, self.pos.y - self.radius, self.radius * 2, self.radius * 2)
-            pg.draw.rect(map_surface, (r, g, b), rect)
+            pg.draw.rect(shape_surface, (r, g, b, draw_alpha), (0, 0, self.radius * 2, self.radius * 2))
         elif self.shape == "triangle":
+            # Using the consistent shape_surface approach from 0c06ff3f
             points = [
-                (self.pos.x, self.pos.y - self.radius),
-                (self.pos.x - self.radius, self.pos.y + self.radius),
-                (self.pos.x + self.radius, self.pos.y + self.radius)
+                (self.radius, 0),
+                (0, self.radius * 2),
+                (self.radius * 2, self.radius * 2)
             ]
-            pg.draw.polygon(map_surface, (r, g, b), points)
-            angle_offset = math.pi / 6
-            points = [
-                (
-                    self.pos.x + self.radius * math.cos(angle_offset + i * math.pi / 3),
-                    self.pos.y + self.radius * math.sin(angle_offset + i * math.pi / 3)
-                )
-                for i in range(6)
-            ]
-            pg.draw.polygon(map_surface, (r, g, b), points)
-            pg.draw.polygon(map_surface, (r, g, b), points)
+            pg.draw.polygon(shape_surface, (r, g, b, draw_alpha), points)
+        
+        map_surface.blit(shape_surface, (self.pos.x - self.radius, self.pos.y - self.radius))
+        
+        # Special text rendering from 0c06ff3f
+        font = pg.font.Font(None, 24)
+        for ft in self.special_texts:
+            alpha = int(255 * (ft["lifetime"] / 1.0)) # Assuming lifetime is initially 1.0 for full visibility
+            surface = font.render(ft["text"], True, ft["color"])
+            surface.set_alpha(alpha)
+            map_surface.blit(surface, (ft["pos"].x, ft["pos"].y - 20))
 
     def take_damage(self, value, damage_type="physical"):
         # Apply damage after resistances
@@ -111,3 +127,6 @@ class Enemy:
     def get_effective_health(self):
         # Health after accounting for incoming damage
         return self.health - self.incoming_damage
+        
+    def has_ability(self, ability_type): # This method uses aea implicitly if ability_type is from aea
+        return any(isinstance(a, ability_type) for a in self.abilities.abilities)

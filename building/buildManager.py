@@ -17,6 +17,7 @@ def build_factory(position, blueprint, resource_manager):
         payout_rate = blueprint.payout_per_wave if hasattr(blueprint, 'payout_per_wave') and blueprint.payout_per_wave is not None else 0
 
         new_factory = Factory(position, blueprint.resource, payout_rate, image_path=None)
+        new_factory.image = pg.transform.scale(blueprint.image, (blueprint.width, blueprint.height))
         factories.append(new_factory)
         building_rects.append(pg.Rect(position[0], position[1], blueprint.width, blueprint.height))
         return True
@@ -31,7 +32,9 @@ def build_tower(position, blueprint, resource_manager):
                 return False
         
         tower_type_name = blueprint.name.replace("Tower - ", "").lower()
-        new_tower = create_tower(position, tower_type_name)
+        adjusted_pos = (position[0] + blueprint.width // 2,position[1] + blueprint.height // 2)
+        new_tower = create_tower(adjusted_pos, tower_type_name)
+        if tower_type_name == "sniper": new_tower.can_see_invisible = True
         towers.append(new_tower)
         building_rects.append(pg.Rect(position[0], position[1], blueprint.width, blueprint.height))
         return True
@@ -57,9 +60,7 @@ def can_build_at(position, blueprint, resource_manager, road_segments, road_thic
     return True
 
 def try_build(mouse_pos, blueprint, resource_manager, road_segments):
-    build_position_x = mouse_pos[0] - blueprint.width // 2
-    build_position_y = mouse_pos[1] - blueprint.height // 2
-    build_pos_tuple = (build_position_x, build_position_y)
+    build_pos_tuple = mouse_pos
 
     if can_build_at(build_pos_tuple, blueprint, resource_manager, road_segments):
         if hasattr(blueprint, 'build_function') and callable(blueprint.build_function):

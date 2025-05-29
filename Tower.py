@@ -6,7 +6,7 @@ from random import randint, choice
 from projectile import Projectile
 import constants as con
 import pygame as pg
-
+import enemy.abstractEnemyAbilities as aea
 
 class TowerStats:
     def __init__(self, range: int, damage: int, reload_time: float,
@@ -64,6 +64,9 @@ class Tower:
 
         potential_targets = []
         for enemy_candidate in enemies:
+            if enemy_candidate.has_ability(aea.invisibleAbility):
+                if not getattr(self, "can_see_invisible", False):
+                    continue
             if not enemy_candidate.is_dead() and self.is_in_range(enemy_candidate):
                 current_health = getattr(enemy_candidate, 'health', 0)
                 inc_damage = getattr(enemy_candidate, 'incoming_damage', 0)
