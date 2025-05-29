@@ -12,6 +12,8 @@ from projectile import Projectile
 import building.buildManager as bm
 from endingScreen import EndingScreen
 from userInterface import UserInterface
+from pauseScreen import PauseScreen
+from playerAbilities import PlayerAbilities
 import os
 import json
 import random
@@ -30,7 +32,7 @@ class GameState:
 def initialize_game():
     pg.init()
     screen = pg.display.set_mode((con.SCREEN_WIDTH, con.SCREEN_HEIGHT), pg.SCALED | pg.RESIZABLE)
-
+    
     pg.display.set_caption("Bardzo fajna gra")
     clock = pg.time.Clock()
     return screen, clock
@@ -78,6 +80,7 @@ def load_assets(level_config):
 
     factory_buttons = []
     tower_buttons = []
+    
     # Button positioning can remain similar, but will now use the filtered blueprints
     # Assuming UserInterface or button drawing logic handles positioning dynamically or you adjust here
     # For simplicity, this example keeps the original button creation loop structure
@@ -274,8 +277,18 @@ def run_game_loop(screen, clock, selected_level_config):
         initial_metal=initial_metal,
         initial_health=initial_health
     )
+    abilities = PlayerAbilities()
     ui = UserInterface()
-
+    are_abilities_enabled = selected_level_config.get("are_abilities_enabled", True)
+    if are_abilities_enabled:
+        ui.ability_buttons = [
+            Button(0, 0, None, text="Fireball", text_color=(255,255,255), font_size=20, width=90, height=40, color=(180,0,0)),
+            Button(0, 0, None, text="Scanner", text_color=(255,255,255), font_size=20, width=90, height=40, color=(0,120,180)),
+            Button(0, 0, None, text="Disruptor", text_color=(0,0,0), font_size=20, width=90, height=40, color=(255,255,0)),
+            Button(0, 0, None, text="Glue", text_color=(255,255,255), font_size=20, width=90, height=40, color=(100,100,255)),
+        ]
+    pause = PauseScreen(screen)
+    is_paused = False
     road_seg = bm.generate_road_segments(waypoints)
     current_wave_data = None
     wave_preparation_timer = 0
@@ -299,12 +312,26 @@ def run_game_loop(screen, clock, selected_level_config):
     while game_state_internal == "running":
         clock_tick = clock.tick(con.FPS)
         mouse_pos = pg.mouse.get_pos()
-
+        if is_paused:
+            pause.draw()
+            state = pause.handle_events()
+            if state == "resume":
+                is_paused = False
+            elif state == "quit":
+                return GameState.QUIT, False
+            continue
         for event in pg.event.get():
             ui.handle_panel_toggle(event, con.SCREEN_WIDTH, con.SCREEN_HEIGHT)
             if event.type == pg.QUIT:
                 game_state_internal = "quit_to_menu"
             if event.type == pg.MOUSEBUTTONDOWN and event.button == 1:
+                skill = ui.get_clicked_ability(mouse_pos)
+                if skill:
+                    abilities.use(skill, resources_manager)  
+                    continue
+                if abilities.selected_skill is not None:
+                    abilities.use(abilities.selected_skill, resources_manager, pos=mouse_pos, enemies=enemies_list)
+                if ui.is_pause_button_clicked(mouse_pos): is_paused = True
                 clicked_on_ui_button_this_frame = False
                 if current_game_mode == GameState.PRE_WAVE and \
                    current_wave_index < len(waves_data_list) and \
@@ -343,7 +370,8 @@ def run_game_loop(screen, clock, selected_level_config):
                 if event.key == pg.K_ESCAPE:
                     if selected_blueprint:
                         selected_blueprint = None
-
+                    else:
+                        is_paused = not is_paused
         if game_state_internal == "quit_to_menu":
             return GameState.MAIN_MENU, level_was_won # Return to main menu if quit event occurs
 
@@ -401,6 +429,7 @@ def run_game_loop(screen, clock, selected_level_config):
         update_enemies(clock_tick, enemies_list, base, resources_manager)
         update_towers(clock_tick, bm.towers, enemies_list, waypoints, projectiles)
         update_projectiles(clock_tick, projectiles, enemies_list)
+        abilities.update(enemies_list, clock.tick(con.FPS) / 1000.0)
 
         if resources_manager.get_resource("health") <= 0:
             game_state_internal = "game_over"
@@ -421,6 +450,8 @@ def run_game_loop(screen, clock, selected_level_config):
         elif current_wave_index >= len(waves_data_list) and game_state_internal == "running":
              all_waves_cleared_text = pg.font.Font(None, 40).render("Level Cleared!", True, (0,255,0))
              screen.blit(all_waves_cleared_text, (con.SCREEN_WIDTH // 2 - all_waves_cleared_text.get_width() // 2, con.SCREEN_HEIGHT - 60))
+        abilities.draw(screen)
+        ui.draw_pause_button(screen)
         pg.display.update()
 
     if game_state_internal == "quit_to_menu":

@@ -1,12 +1,16 @@
 import json
 from math import inf
 import random
+import pygame as pg
+
 class EnemyAbility:
     def apply(self, enemy, clock_tick=0):
         pass
 
     def on_update(self, enemy, clock_tick=0):
-        pass
+        if getattr(enemy, "disabled_abilities", {}).get("active", False):
+            return  
+
 
 class FastAbility(EnemyAbility):
     def apply(self, enemy):
@@ -19,10 +23,6 @@ class MagicResistantAbility(EnemyAbility):
 class RangedAbility(EnemyAbility):
     def apply(self, enemy):
         enemy.attack_range += 50
-class Boss(EnemyAbility):
-    pass #Implementation needed
-
-import pygame as pg
 
 class HealerAbility(EnemyAbility):
     def __init__(self, heal_amount, range=150, cooldown=3.0):
@@ -32,6 +32,9 @@ class HealerAbility(EnemyAbility):
         self.timer = 0.0  
 
     def on_update(self, enemy, clock_tick):
+        if getattr(enemy, "disabled_abilities", {}).get("active", False):
+            return  
+
         self.timer += clock_tick / 1000.0 
         if self.timer < self.cooldown:
             return
@@ -73,6 +76,8 @@ class SummonerAbility(EnemyAbility):
         self.timer = 0.0
 
     def on_update(self, enemy, clock_tick):
+        if getattr(enemy, "disabled_abilities", {}).get("active", False):
+            return  
         from enemy.enemy import Enemy
         self.timer += clock_tick / 1000.0
         if self.timer < self.cooldown:
@@ -92,7 +97,7 @@ class SummonerAbility(EnemyAbility):
                 start + pg.Vector2(30, 0).rotate(random.uniform(0, 360)),
                 start + pg.Vector2(30, 0).rotate(random.uniform(0, 360)),
                 start + pg.Vector2(30, 0).rotate(random.uniform(0, 360)),
-                start  # powrót
+                start 
             ]
             if enemy.curr_waypoint + 1 < len(enemy.waypoints):
                 resume_path = enemy.waypoints[enemy.curr_waypoint + 1:]
@@ -112,6 +117,8 @@ class SummonerAbility(EnemyAbility):
 
 
 class invisibleAbility(EnemyAbility):
+    def __init__(self):
+        self.name = "invisible"
     def apply(self, enemy):
         enemy.is_invisible = True
 

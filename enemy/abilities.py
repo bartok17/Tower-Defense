@@ -1,3 +1,4 @@
+import time
 import pygame as pg
 import enemy.abstractEnemyAbilities as aea
 
@@ -14,7 +15,6 @@ class Abilities:
             "tank": aea.TankAbility(),
             "summoner": aea.SummonerAbility(1, "1"),
             "healer": aea.HealerAbility(5),
-            "boss": aea.Boss(),
             "invisible": aea.invisibleAbility(),
         }
         if ability_name in abilities_dict:
@@ -25,5 +25,12 @@ class Abilities:
             ability.apply(enemy)
 
     def update_all(self, enemy, clock_tick):
+        if hasattr(enemy, "disabled_abilities") and enemy.disabled_abilities.get("active", False):
+            if time.time() > enemy.disabled_abilities["expires_at"]:
+                enemy.disabled_abilities["active"] = False
+            else: return 
         for ability in self.abilities:
             ability.on_update(enemy, clock_tick)
+
+    def remove_ability(self, name: str):
+        self.abilities = [a for a in self.abilities if getattr(a, "name", None) != name]

@@ -10,6 +10,7 @@
         "start_gold": 200,
         "start_wood": 100,
         "start_metal": 50,
+        "are_abilities_enabled": false,
         "available_towers": [
             "basic",
             "rapid"
@@ -26,6 +27,7 @@
         "start_gold": 250,
         "start_wood": 100,
         "start_metal": 50,
+        "are_abilities_enabled": true,
         "available_towers": [
             "basic",
             "sniper",
@@ -44,6 +46,7 @@
         "start_gold": 300,
         "start_wood": 100,
         "start_metal": 50,
+        "are_abilities_enabled": true,
         "available_towers": [
             "basic",
             "rapid",
