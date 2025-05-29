@@ -1,4 +1,5 @@
 import pygame as pg
+import math
 from enemy.abilities import Abilities
 
 class Enemy:
@@ -32,6 +33,7 @@ class Enemy:
         self.gold_reward = template.get("gold_reward", 5)
 
     def update(self):
+        # Move towards the next waypoint
         if self.curr_waypoint + 1 < len(self.waypoints):
             next_target = pg.Vector2(self.waypoints[self.curr_waypoint + 1])
             direction = (next_target - self.pos).normalize()
@@ -41,6 +43,7 @@ class Enemy:
                 self.curr_waypoint += 1
 
     def draw(self, map_surface):
+        # Draw the enemy based on its shape
         r, g, b = self.color
         if self.shape == "circle":
             pg.draw.circle(map_surface, (r, g, b), (int(self.pos.x), int(self.pos.y)), self.radius)
@@ -54,16 +57,35 @@ class Enemy:
                 (self.pos.x + self.radius, self.pos.y + self.radius)
             ]
             pg.draw.polygon(map_surface, (r, g, b), points)
+            angle_offset = math.pi / 6
+            points = [
+                (
+                    self.pos.x + self.radius * math.cos(angle_offset + i * math.pi / 3),
+                    self.pos.y + self.radius * math.sin(angle_offset + i * math.pi / 3)
+                )
+                for i in range(6)
+            ]
+            pg.draw.polygon(map_surface, (r, g, b), points)
+            pg.draw.polygon(map_surface, (r, g, b), points)
 
-    def take_damage(self, value):
+    def take_damage(self, value, damage_type="physical"):
+        # Apply damage after resistances
+        if damage_type == "magic":
+            value -= self.magic_resistance
+        elif damage_type == "physical":
+            value -= self.armor
+        if value < 0:
+            value = 0
         self.health -= value
         if self.health <= 0:
             self.health = 0
 
     def is_dead(self):
+        # Check if enemy is dead
         return self.health <= 0
 
     def distance_to_end(self):
+        # Calculate distance to the last waypoint
         total_distance = 0
         current_position = self.pos
         for i in range(self.curr_waypoint + 1, len(self.waypoints)):
@@ -73,12 +95,15 @@ class Enemy:
         return total_distance
 
     def has_finished(self):
+        # Check if enemy reached the last waypoint
         return self.curr_waypoint >= len(self.waypoints) - 1
 
     def add_incoming_damage(self, amount):
+        # Track incoming damage
         self.incoming_damage += amount
 
     def remove_incoming_damage(self, amount):
+        # Remove tracked incoming damage
         self.incoming_damage -= amount
         if self.incoming_damage < 0:
             self.incoming_damage = 0

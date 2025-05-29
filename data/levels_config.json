@@ -13,7 +13,7 @@
     },
     {
         "id": "level2",
-        "name": "hexagon valley",
+        "name": "x",
         "map_image_path": "map2.png",
         "waypoints_path": "map2_waypoints.json",
         "waves_path": "waves_level2.json",
@@ -22,5 +22,18 @@
         "start_gold": 250,
         "start_wood": 100,
         "start_metal": 50
+    },
+    {
+        "id": "level3",
+        "name": "hexagon valley",
+        "map_image_path": "map3.png",
+        "waypoints_path": "map3_waypoints.json",
+        "waves_path": "waves_level3.json",
+        "thumbnail_path": "level3_thumb.png",
+        "unlocked": false,
+        "start_gold": 300,
+        "start_wood": 100,
+        "start_metal": 50
     }
+    
 ]

@@ -23,7 +23,7 @@ def load_all_waves(waves_path, template_path, waypoints):
     waves_data_from_file = load_waves(waves_path)
     all_processed_waves_sorted = []
 
-    # Ensure waves are processed in order by wave ID
+    # Sort wave IDs numerically if possible
     sorted_wave_ids = []
     if isinstance(waves_data_from_file, dict):
         try:
@@ -46,6 +46,7 @@ def load_all_waves(waves_path, template_path, waypoints):
 
         enemy_groups_for_wave = []
         for unit_entry in unit_definitions:
+            # Parse unit entry
             enemy_id, count, delay_after_group_sec = -1, 0, 0.0
             inter_spawn_delay_ms = DEFAULT_INTER_ENEMY_SPAWN_DELAY_MS
 
@@ -77,7 +78,7 @@ def load_all_waves(waves_path, template_path, waypoints):
                 # Randomize path and offset for each enemy
                 chosen_path_name = choice(list(waypoints.keys()))
                 original_path_tuples = waypoints[chosen_path_name]
-                enemy_offset = uniform(-20.0, 20.0)
+                enemy_offset = uniform(-25.0, 25.0)
                 offset_enemy_path = generate_offset_path(original_path_tuples, enemy_offset)
                 enemy = Enemy(offset_enemy_path, template_copy)
                 enemies_in_this_group.append(enemy)
@@ -118,6 +119,7 @@ def load_wave_by_id(waves_path, template_path, wave_id_to_load, waypoints):
 
     enemy_groups_for_wave = []
     for unit_entry in unit_definitions:
+        # Parse unit entry
         enemy_id, count, delay_after_group_sec = -1, 0, 0.0
         inter_spawn_delay_ms = DEFAULT_INTER_ENEMY_SPAWN_DELAY_MS
 
@@ -146,6 +148,7 @@ def load_wave_by_id(waves_path, template_path, wave_id_to_load, waypoints):
 
         enemies_in_this_group = []
         for _ in range(count):
+            # Randomize path and offset for each enemy
             chosen_path_name = choice(list(waypoints.keys()))
             original_path_tuples = waypoints[chosen_path_name]
             enemy_offset = uniform(-20.0, 20.0)

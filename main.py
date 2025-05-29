@@ -57,7 +57,7 @@ def load_assets(level_config):
                           bm.build_tower, tower_type="basic"),
         BuildingBlueprint("Tower - cannon", tower_cannon_img, {"gold": 150, "wood": 70,"metal":20}, 40, 40, 
                           bm.build_tower, tower_type="cannon"),
-        BuildingBlueprint("Tower - flame", tower_flame_img, {"gold": 200, "wood": 150}, 40, 40, 
+        BuildingBlueprint("Tower - flame", tower_flame_img, {"gold": 200, "wood": 100}, 40, 40, 
                           bm.build_tower, tower_type="flame"),
         BuildingBlueprint("Tower - rapid", tower_rapid_img, {"gold": 150,"wood": 20}, 40, 40, 
                           bm.build_tower, tower_type="rapid"),
@@ -89,11 +89,28 @@ def update_enemies(clock_tick, enemies_list, base, resources_manager):
             resources_manager.add_resource("gold", enemy.gold_reward) 
 
 def update_towers(clock_tick, towers, enemies_list, waypoints, projectiles):
+    delta_time_seconds = clock_tick / 1000.0
     for tower in towers:
+        # Manage cooldown between shots
         if tower.current_reload > 0:
-            tower.current_reload -= clock_tick / 1000.0
+            tower.current_reload -= delta_time_seconds
             tower.current_reload = max(0, tower.current_reload)
-        tower.attack(enemies_list, 1, waypoints, projectiles)
+
+        # Manage magazine reloading
+        if tower.is_reloading_magazine:
+            tower.current_magazine_reload_timer -= delta_time_seconds
+            if tower.current_magazine_reload_timer <= 0:
+                tower.current_magazine_shots = tower.stats.magazine_size
+                tower.is_reloading_magazine = False
+                tower.current_magazine_reload_timer = 0 # Reset magazine reload timer
+        else:
+            # If magazine isn't full and not currently reloading, start the reload process
+            if tower.current_magazine_shots < tower.stats.magazine_size:
+                tower.is_reloading_magazine = True
+                tower.current_magazine_reload_timer = tower.stats.magazine_reload_time
+        
+        # Tower attempts to attack targets
+        tower.attack(enemies_list, waypoints, projectiles)
 
 def update_projectiles(clock_tick: int, projectiles: List[Projectile], enemies_list: list):
     for projectile in projectiles[:]:
@@ -237,7 +254,7 @@ def run_game_loop(screen, clock, selected_level_config):
     wave_preparation_timer = 0 
     time_since_last_spawn_in_wave = 0
 
-    # Spawning state
+    # Variables for managing enemy spawning sequence within a wave
     current_group_idx_in_wave = 0
     spawn_idx_within_group = 0
     inter_group_delay_timer = 0.0
@@ -268,7 +285,7 @@ def run_game_loop(screen, clock, selected_level_config):
                     current_wave_data = waves_data_list[current_wave_index]
                     wave_preparation_timer = current_wave_data.get("P_time", 0) * 1000
                     
-                    # Reset spawning state for new wave
+                    # Reset wave-specific spawning variables
                     time_since_last_spawn_in_wave = 0
                     current_group_idx_in_wave = 0
                     spawn_idx_within_group = 0
@@ -292,7 +309,7 @@ def run_game_loop(screen, clock, selected_level_config):
                         selected_blueprint = None
         
         if game_state_internal == "quit_to_menu":
-            return GameState.MAIN_MENU
+            return GameState.MAIN_MENU, level_was_won # Return to main menu if quit event occurs
 
         if current_game_mode == GameState.PRE_WAVE:
             if current_wave_index < len(waves_data_list):
@@ -303,7 +320,7 @@ def run_game_loop(screen, clock, selected_level_config):
         elif current_game_mode == GameState.WAVE_ACTIVE:
             wave_preparation_timer -= clock_tick
             if wave_preparation_timer <= 0 and current_wave_data:
-                # Enemy spawning logic
+                # Handles the spawning of enemies in the current wave
                 if inter_group_delay_timer > 0:
                     inter_group_delay_timer -= clock_tick
                     if inter_group_delay_timer < 0: 
@@ -328,7 +345,7 @@ def run_game_loop(screen, clock, selected_level_config):
                             spawn_idx_within_group = 0 
                             inter_group_delay_timer = delay_after_this_group_seconds * 1000.0
                     elif len(enemies_list) == 0:
-                        # All groups processed and all enemies cleared
+                        # Actions after all enemies in the current wave are cleared
                         resources_manager.add_resource("gold", current_wave_data.get("passive_gold", 0))
                         resources_manager.add_resource("wood", current_wave_data.get("passive_wood", 0))
                         resources_manager.add_resource("metal", current_wave_data.get("passive_metal", 0))
@@ -385,21 +402,23 @@ def run_game_loop(screen, clock, selected_level_config):
             clock.tick(con.FPS) 
         
         if end_screen_action == "play_again":
-            return GameState.PRE_WAVE, False
+            return GameState.PRE_WAVE, False # Return to pre-wave state for the same level
         elif end_screen_action == "main_menu":
-            return GameState.LEVEL_SELECT, level_was_won 
+            return GameState.LEVEL_SELECT, level_was_won # Return to level select
             
-    return GameState.LEVEL_SELECT, level_was_won
+    return GameState.LEVEL_SELECT, level_was_won # Default return to level select
 
 def load_levels_config(file_path, default_config):
     try:
         with open(file_path, 'r') as f:
             return json.load(f)
     except FileNotFoundError:
+        # Configuration file not found, create one with default settings
         print(f"'{file_path}' not found. Creating with default configuration.")
         save_levels_config(file_path, default_config)
         return default_config
     except json.JSONDecodeError:
+        # Error reading configuration file, use default settings and save them
         print(f"Error decoding JSON from '{file_path}'. Using default configuration.")
         save_levels_config(file_path, default_config)
         return default_config
@@ -409,12 +428,13 @@ def save_levels_config(file_path, config_data):
         with open(file_path, 'w') as f:
             json.dump(config_data, f, indent=4)
     except IOError:
+        # Error saving configuration
         print(f"Error: Could not save levels configuration to '{file_path}'.")
 
 
 if __name__ == "__main__":
     screen, clock = initialize_game()
-    os.makedirs(con.DATA_DIR, exist_ok=True)
+    os.makedirs(con.DATA_DIR, exist_ok=True) # Ensure data directory exists
     levels_config_filepath = os.path.join(con.DATA_DIR, LEVELS_CONFIG_FILENAME)
     LEVELS_CONFIG = load_levels_config(levels_config_filepath, con.LEVELS_CONFIG)
     application_state = GameState.MAIN_MENU
@@ -430,6 +450,7 @@ if __name__ == "__main__":
                 next_app_state_from_game, level_was_won = run_game_loop(screen, clock, selected_level_conf)
                 application_state = next_app_state_from_game
                 if level_was_won:
+                    # Unlock the next level if the current one was won
                     current_level_index = -1
                     for i, lc in enumerate(LEVELS_CONFIG):
                         if lc["id"] == selected_level_conf["id"]:
@@ -441,5 +462,7 @@ if __name__ == "__main__":
                             save_levels_config(levels_config_filepath, LEVELS_CONFIG)
                             print(f"Unlocked and saved: {LEVELS_CONFIG[current_level_index + 1]['name']}")
             else:
+                # If no level is selected (e.g., backed out from level select), return to main menu
                 application_state = GameState.MAIN_MENU
     pg.quit()
+

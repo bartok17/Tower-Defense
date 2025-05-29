@@ -3,9 +3,9 @@
     "id": 1,
     "health": 20,
     "speed": 1.0,
-    "armor": 0.5,
-    "damage": 1,
-    "magic_resistance": 1,
+    "armor": 0,
+    "damage": 5,
+    "magic_resistance": 0,
     "attack_range": 80,
     "attack_speed": 1.8,
     "color": [
@@ -17,7 +17,7 @@
     "abilities": [
       
     ],
-    "gold_reward": 10,
+    "gold_reward": 8,
     "shape": "circle"
   },
   "2": {
@@ -25,7 +25,7 @@
     "health": 100,
     "speed": 0.5,
     "armor": 1,
-    "damage": 2,
+    "damage": 20,
     "magic_resistance": 1,
     "attack_range": 50,
     "attack_speed": 1.0,
@@ -38,36 +38,15 @@
     "abilities": [
       "tank"
     ],
-    "gold_reward": 25,
+    "gold_reward": 15,
     "shape": "square"
   },
   "3": {
     "id": 3,
     "health": 10,
     "speed": 2,
-    "armor": 1,
-    "damage": 2,
-    "magic_resistance": 1,
-    "attack_range": 50,
-    "attack_speed": 1.0,
-    "color": [
-      255,
-      0,
-      255
-    ],
-    "radius": 10,
-    "abilities": [
-      
-    ],
-    "gold_reward": 5,
-    "shape": "triangle"
-  },
-  "4": {
-    "id": 4,
-    "health": 120,
-    "speed": 0.3,
-    "armor": 5,
-    "damage": 2,
+    "armor": 0,
+    "damage": 10,
     "magic_resistance": 5,
     "attack_range": 50,
     "attack_speed": 1.0,
@@ -80,7 +59,28 @@
     "abilities": [
       
     ],
-    "gold_reward": 50,
+    "gold_reward": 2,
     "shape": "triangle"
+  },
+  "4": {
+    "id": 4,
+    "health": 120,
+    "speed": 0.3,
+    "armor": 5,
+    "damage": 40,
+    "magic_resistance": 5,
+    "attack_range": 50,
+    "attack_speed": 1.0,
+    "color": [
+      255,
+      0,
+      255
+    ],
+    "radius": 10,
+    "abilities": [
+      
+    ],
+    "gold_reward": 20,
+    "shape": "hexagon"
   }
 }
