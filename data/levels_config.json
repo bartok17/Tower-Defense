@@ -10,7 +10,10 @@
         "start_gold": 200,
         "start_wood": 100,
         "start_metal": 50,
-        "available_towers": ["basic", "rapid"]
+        "available_towers": [
+            "basic",
+            "rapid"
+        ]
     },
     {
         "id": "level2",
@@ -23,7 +26,12 @@
         "start_gold": 250,
         "start_wood": 100,
         "start_metal": 50,
-        "available_towers": ["basic", "sniper", "cannon", "rapid"]
+        "available_towers": [
+            "basic",
+            "sniper",
+            "cannon",
+            "rapid"
+        ]
     },
     {
         "id": "level3",
@@ -32,11 +40,17 @@
         "waypoints_path": "map3_waypoints.json",
         "waves_path": "waves_level3.json",
         "thumbnail_path": "level3_thumb.png",
-        "unlocked": false,
+        "unlocked": true,
         "start_gold": 300,
         "start_wood": 100,
         "start_metal": 50,
-        "available_towers": ["basic", "rapid", "sniper", "cannon", "flame", "ice"]
+        "available_towers": [
+            "basic",
+            "rapid",
+            "sniper",
+            "cannon",
+            "flame",
+            "ice"
+        ]
     }
-    
 ]

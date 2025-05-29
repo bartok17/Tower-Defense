@@ -64,17 +64,17 @@
   },
   "4": {
     "id": 4,
-    "health": 120,
-    "speed": 0.3,
-    "armor": 5,
+    "health": 150,
+    "speed": 0.4,
+    "armor": 15,
     "damage": 40,
     "magic_resistance": 5,
     "attack_range": 50,
     "attack_speed": 1.0,
     "color": [
-      255,
-      0,
-      255
+      165,
+      42,
+      42
     ],
     "radius": 10,
     "abilities": [
