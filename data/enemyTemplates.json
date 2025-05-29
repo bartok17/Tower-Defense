@@ -15,7 +15,7 @@
     ],
     "radius": 10,
     "abilities": [
-      "summoner"
+  
     ],
     "gold_reward": 8,
     "shape": "circle"
@@ -36,7 +36,7 @@
     ],
     "radius": 10,
     "abilities": [
-      "tank"
+ 
     ],
     "gold_reward": 15,
     "shape": "square"
