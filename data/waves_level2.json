@@ -3,7 +3,7 @@
     "id": 1,
     "P_time": 2,
     "inter_wave_delay": 5,
-    "passive_gold": 100,
+    "passive_gold": 80,
     "passive_wood": 50,
     "passive_metal": 25,
     "units": [
@@ -43,9 +43,9 @@
     "id": 3,
     "P_time": 2,
     "inter_wave_delay": 5,
-    "passive_gold": 50,
-    "passive_wood": 25,
-    "passive_metal": 25,
+    "passive_gold": 0,
+    "passive_wood": 0,
+    "passive_metal": 0,
     "units": [
       [
         2,
@@ -74,8 +74,8 @@
     "P_time": 2,
     "inter_wave_delay": 5,
     "passive_gold": 0,
-    "passive_wood": 25,
-    "passive_metal": 25,
+    "passive_wood": 0,
+    "passive_metal": 0,
     "units": [
       [
         2,
@@ -103,8 +103,8 @@
     "P_time": 2,
     "inter_wave_delay": 5,
     "passive_gold": 0,
-    "passive_wood": 25,
-    "passive_metal": 25,
+    "passive_wood": 0,
+    "passive_metal": 0,
     "units": [
       [
         4,

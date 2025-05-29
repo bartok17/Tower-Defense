@@ -53,9 +53,9 @@ def load_assets(level_config):
     waypoints = load_lists_from_json(waypoints_path)
 
     factory_blueprints = [
-        BuildingBlueprint("Metal Factory", factory_metal_img, {"gold": 60}, 40, 40,
+        BuildingBlueprint("Metal Factory", factory_metal_img, {"gold": 50}, 40, 40,
                           bm.build_factory, resource="metal", payout_per_wave=10),
-        BuildingBlueprint("Wood Factory", factory_wood_img, {"gold": 40}, 40, 40,
+        BuildingBlueprint("Wood Factory", factory_wood_img, {"gold": 35}, 40, 40,
                           bm.build_factory, resource="wood", payout_per_wave=15),
     ]
 
@@ -63,9 +63,9 @@ def load_assets(level_config):
     all_tower_blueprints_data = [
         {"name": "Tower - basic", "image": tower_basic_img, "cost": {"gold": 50}, "width": 40, "height": 40, "build_function": bm.build_tower, "tower_type": "basic"},
         {"name": "Tower - cannon", "image": tower_cannon_img, "cost": {"gold": 150, "wood": 70, "metal": 20}, "width": 40, "height": 40, "build_function": bm.build_tower, "tower_type": "cannon"},
-        {"name": "Tower - flame", "image": tower_flame_img, "cost": {"gold": 200, "wood": 100}, "width": 40, "height": 40, "build_function": bm.build_tower, "tower_type": "flame"},
-        {"name": "Tower - rapid", "image": tower_rapid_img, "cost": {"gold": 150, "wood": 20}, "width": 40, "height": 40, "build_function": bm.build_tower, "tower_type": "rapid"},
-        {"name": "Tower - sniper", "image": tower_sniper_img, "cost": {"gold": 200, "metal": 10}, "width": 40, "height": 40, "build_function": bm.build_tower, "tower_type": "sniper"},
+        {"name": "Tower - flame", "image": tower_flame_img, "cost": {"gold": 200, "wood": 90}, "width": 40, "height": 40, "build_function": bm.build_tower, "tower_type": "flame"},
+        {"name": "Tower - rapid", "image": tower_rapid_img, "cost": {"gold": 150, "wood": 10}, "width": 40, "height": 40, "build_function": bm.build_tower, "tower_type": "rapid"},
+        {"name": "Tower - sniper", "image": tower_sniper_img, "cost": {"gold": 200, "metal": 15}, "width": 40, "height": 40, "build_function": bm.build_tower, "tower_type": "sniper"},
     ]
 
     level_tower_blueprints = []
@@ -80,7 +80,6 @@ def load_assets(level_config):
 
     factory_buttons = []
     tower_buttons = []
-    
     # Button positioning can remain similar, but will now use the filtered blueprints
     # Assuming UserInterface or button drawing logic handles positioning dynamically or you adjust here
     # For simplicity, this example keeps the original button creation loop structure
@@ -91,7 +90,6 @@ def load_assets(level_config):
         factory_buttons.append(btn)
 
     for i, blueprint in enumerate(level_tower_blueprints):
-        # You might want to adjust button positioning if the number of towers changes significantly
         btn = Button(con.SCREEN_WIDTH - 80, 50 + i * 60, blueprint.image, blueprint.name, width=blueprint.width, height=blueprint.height)
         tower_buttons.append(btn)
         

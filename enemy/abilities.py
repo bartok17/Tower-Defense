@@ -13,7 +13,7 @@ class Abilities:
             "ranged": aea.RangedAbility(),
             "fast": aea.FastAbility(),
             "tank": aea.TankAbility(),
-            "summoner": aea.SummonerAbility(1, "1"),
+            "summoner1": aea.SummonerAbility(4, "6"),
             "healer": aea.HealerAbility(5),
             "invisible": aea.invisibleAbility(),
         }

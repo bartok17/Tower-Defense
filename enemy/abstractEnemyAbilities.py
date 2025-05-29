@@ -1,7 +1,25 @@
 import json
 from math import inf
 import random
-import pygame as pg
+import os
+import constants as root_project_constants 
+
+_loaded_enemy_templates = None
+
+def _get_enemy_templates():
+    global _loaded_enemy_templates
+    if _loaded_enemy_templates is None:
+        file_path = os.path.join(root_project_constants.DATA_DIR, "enemyTemplates.json")
+        try:
+            with open(file_path) as f:
+                _loaded_enemy_templates = json.load(f)
+        except FileNotFoundError:
+            print(f"ERROR: Could not find enemyTemplates.json at {file_path}")
+            _loaded_enemy_templates = {}
+        except json.JSONDecodeError:
+            print(f"ERROR: Could not decode enemyTemplates.json at {file_path}")
+            _loaded_enemy_templates = {}
+    return _loaded_enemy_templates
 
 class EnemyAbility:
     def apply(self, enemy, clock_tick=0):
@@ -51,6 +69,7 @@ class HealerAbility(EnemyAbility):
         if not nearby:
             return
 
+        # Heal the most injured nearby ally (lowest health ratio)
         target = min(nearby, key=lambda e: e.health / e.max_health)
         target.health = min(target.max_health, target.health + self.heal_amount)
         if hasattr(target, 'special_texts'):
@@ -69,9 +88,9 @@ class TankAbility(EnemyAbility):
         enemy.speed -= 0.5
 
 class SummonerAbility(EnemyAbility):
-    def __init__(self, summon_count, summon_type, cooldown=5.0):
+    def __init__(self, summon_count, summon_type_id, cooldown=5.0):
         self.summon_count = summon_count
-        self.summon_type = summon_type
+        self.summon_type_id = str(summon_type_id)
         self.cooldown = cooldown
         self.timer = 0.0
 
@@ -87,11 +106,16 @@ class SummonerAbility(EnemyAbility):
 
         if not hasattr(enemy, "all_enemies"):
             return
-        with open("data/enemyTemplates.json") as f:
-            templates = json.load(f)
-        template = templates[self.summon_type]
+        
+        templates = _get_enemy_templates()
+        template = templates.get(self.summon_type_id)
+        if not template:
+            print(f"Warning: SummonerAbility could not find template for ID {self.summon_type_id}")
+            return
+
         for _ in range(self.summon_count):
             start = pg.Vector2(enemy.pos)
+            # Create a short loop path before resuming normal path
             loop = [
                 start,
                 start + pg.Vector2(30, 0).rotate(random.uniform(0, 360)),
@@ -101,7 +125,8 @@ class SummonerAbility(EnemyAbility):
             ]
             if enemy.curr_waypoint + 1 < len(enemy.waypoints):
                 resume_path = enemy.waypoints[enemy.curr_waypoint + 1:]
-            else: resume_path = []
+            else:
+                resume_path = []
             path = loop + [pg.Vector2(p) for p in resume_path]
             new_enemy = Enemy(path, template)
             new_enemy.all_enemies = enemy.all_enemies
@@ -114,11 +139,8 @@ class SummonerAbility(EnemyAbility):
                 "color": (150, 150, 255)
             })
 
-
-
 class invisibleAbility(EnemyAbility):
     def __init__(self):
         self.name = "invisible"
     def apply(self, enemy):
         enemy.is_invisible = True
-

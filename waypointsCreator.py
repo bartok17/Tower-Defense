@@ -15,7 +15,7 @@ def load_lists_from_json(filename):
         return json.load(f)
 
 if __name__ == "__main__":
-    mapName = "map2"
+    mapName = "map3"
 
     list1 = [(725,0),(725,585),(415,585),(0,1000)]
     list2 = [(725,0),(725,585),(970,1000)]
