@@ -1,7 +1,7 @@
 {
   "1": {
     "id": 1,
-    "P_time": 5,
+    "P_time": 2,
     "inter_wave_delay": 5,
     "passive_gold": 100,
     "passive_wood": 50,
@@ -18,7 +18,7 @@
   },
   "2": {
     "id": 2,
-    "P_time": 5,
+    "P_time": 2,
     "inter_wave_delay": 5,
     "passive_gold": 50,
     "passive_wood": 25,
@@ -41,7 +41,7 @@
   },
   "3": {
     "id": 3,
-    "P_time": 5,
+    "P_time": 2,
     "inter_wave_delay": 5,
     "passive_gold": 50,
     "passive_wood": 25,
@@ -71,7 +71,7 @@
   },
   "5": {
     "id": 5,
-    "P_time": 5,
+    "P_time": 2,
     "inter_wave_delay": 5,
     "passive_gold": 0,
     "passive_wood": 25,
@@ -81,7 +81,7 @@
         2,
         5,
         1.0,
-        500
+        1000
       ],
       [
         1,
@@ -100,7 +100,7 @@
   },
   "6": {
     "id": 6,
-    "P_time": 5,
+    "P_time": 2,
     "inter_wave_delay": 5,
     "passive_gold": 0,
     "passive_wood": 25,
@@ -130,7 +130,7 @@
   },
   "7": {
     "id": 7,
-    "P_time": 5,
+    "P_time": 2,
     "inter_wave_delay": 5,
     "passive_gold": 0,
     "passive_wood": 50,
