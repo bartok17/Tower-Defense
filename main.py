@@ -281,7 +281,7 @@ def run_game_loop(screen, clock, selected_level_config):
     wave_preparation_timer = 0
     time_since_last_spawn_in_wave = 0
 
-    # Enemy spawning state
+    # Enemy spawning state variables
     current_group_idx_in_wave = 0
     spawn_idx_within_group = 0
     inter_group_delay_timer = 0.0
@@ -298,6 +298,7 @@ def run_game_loop(screen, clock, selected_level_config):
     level_was_won = False
     show_fps = False
     show_roads = False 
+    show_tower_ranges = False
     fps_font = pg.font.Font(None, 30)
 
     while game_state_internal == "running":
@@ -367,6 +368,8 @@ def run_game_loop(screen, clock, selected_level_config):
                     show_fps = not show_fps
                 if event.key == pg.K_r: 
                     show_roads = not show_roads
+                if event.key == pg.K_v:
+                    show_tower_ranges = not show_tower_ranges
         if game_state_internal == "quit_to_menu":
             return GameState.MAIN_MENU, level_was_won
 
@@ -404,7 +407,7 @@ def run_game_loop(screen, clock, selected_level_config):
                             spawn_idx_within_group = 0
                             inter_group_delay_timer = delay_after_this_group_seconds * 1000.0
                     elif len(enemies_list) == 0:
-                        # After all enemies in the wave are cleared
+                        # All enemies in the wave are cleared
                         resources_manager.add_resource("gold", current_wave_data.get("passive_gold", 0))
                         resources_manager.add_resource("wood", current_wave_data.get("passive_wood", 0))
                         resources_manager.add_resource("metal", current_wave_data.get("passive_metal", 0))
@@ -431,14 +434,17 @@ def run_game_loop(screen, clock, selected_level_config):
 
         screen.fill("black")
         screen.blit(map_img, (0, 0))
-        if show_roads: # Conditionally draw waypoints
+        if show_roads:
             draw_waypoints(screen, waypoints)
         ui.draw_resources(screen, resources_manager.resources, wave_index=current_wave_index, total_waves=len(waves_data_list))
         ui.draw_build_panel(screen, factory_buttons, tower_buttons)
         bm.draw_factories(screen)
-        for tower_instance in bm.towers: tower_instance.draw(screen)
-        for enemy_instance in enemies_list: enemy_instance.draw(screen)
-        for projectile_instance in projectiles: projectile_instance.draw(screen)
+        for tower_instance in bm.towers:
+            tower_instance.draw(screen, show_tower_ranges)
+        for enemy_instance in enemies_list:
+            enemy_instance.draw(screen)
+        for projectile_instance in projectiles:
+            projectile_instance.draw(screen)
         if selected_blueprint:
             selected_blueprint.draw_ghost(screen, resources_manager, road_seg)
         if current_game_mode == GameState.PRE_WAVE and current_wave_index < len(waves_data_list):
