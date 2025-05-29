@@ -32,7 +32,6 @@ class GameState:
 def initialize_game():
     pg.init()
     screen = pg.display.set_mode((con.SCREEN_WIDTH, con.SCREEN_HEIGHT), pg.SCALED | pg.RESIZABLE)
-    
     pg.display.set_caption("Bardzo fajna gra")
     clock = pg.time.Clock()
     return screen, clock
@@ -59,7 +58,6 @@ def load_assets(level_config):
                           bm.build_factory, resource="wood", payout_per_wave=15),
     ]
 
-    # Master list of all possible tower blueprint
     all_tower_blueprints_data = [
         {"name": "Tower - basic", "image": tower_basic_img, "cost": {"gold": 50}, "width": 40, "height": 40, "build_function": bm.build_tower, "tower_type": "basic"},
         {"name": "Tower - cannon", "image": tower_cannon_img, "cost": {"gold": 150, "wood": 70, "metal": 20}, "width": 40, "height": 40, "build_function": bm.build_tower, "tower_type": "cannon"},
@@ -69,7 +67,7 @@ def load_assets(level_config):
     ]
 
     level_tower_blueprints = []
-    available_tower_types = level_config.get("available_towers", []) # Get allowed types, default to empty list
+    available_tower_types = level_config.get("available_towers", [])
 
     for data in all_tower_blueprints_data:
         if data["tower_type"] in available_tower_types:
@@ -81,16 +79,15 @@ def load_assets(level_config):
     factory_buttons = []
     tower_buttons = []
 
-
-    for i, blueprint in enumerate(factory_blueprints): # Factories are not level-restricted in this example
-        btn = Button(0, 0, blueprint.image, blueprint.name, width=blueprint.width, height=blueprint.height, )
+    for i, blueprint in enumerate(factory_blueprints):
+        btn = Button(0, 0, blueprint.image, blueprint.name, width=blueprint.width, height=blueprint.height)
         factory_buttons.append(btn)
 
     for i, blueprint in enumerate(level_tower_blueprints):
         btn = Button(con.SCREEN_WIDTH - 80, 50 + i * 60, blueprint.image, blueprint.name, width=blueprint.width, height=blueprint.height)
         tower_buttons.append(btn)
         
-    return map_img, button_img, waypoints, factory_buttons, factory_blueprints, tower_buttons, level_tower_blueprints # Return filtered tower blueprints
+    return map_img, button_img, waypoints, factory_buttons, factory_blueprints, tower_buttons, level_tower_blueprints
 
 def draw_waypoints(screen, waypoints):
     for name, road in waypoints.items():
@@ -113,25 +110,21 @@ def update_enemies(clock_tick, enemies_list, base, resources_manager):
 def update_towers(clock_tick, towers, enemies_list, waypoints, projectiles):
     delta_time_seconds = clock_tick / 1000.0
     for tower in towers:
-        # Manage cooldown between shots
         if tower.current_reload > 0:
             tower.current_reload -= delta_time_seconds
             tower.current_reload = max(0, tower.current_reload)
 
-        # Manage magazine reloading
         if tower.is_reloading_magazine:
             tower.current_magazine_reload_timer -= delta_time_seconds
             if tower.current_magazine_reload_timer <= 0:
                 tower.current_magazine_shots = tower.stats.magazine_size
                 tower.is_reloading_magazine = False
-                tower.current_magazine_reload_timer = 0 # Reset magazine reload timer
+                tower.current_magazine_reload_timer = 0
         else:
-            # If magazine isn't full and not currently reloading, start the reload process
             if tower.current_magazine_shots < tower.stats.magazine_size:
                 tower.is_reloading_magazine = True
                 tower.current_magazine_reload_timer = tower.stats.magazine_reload_time
 
-        # Tower attempts to attack targets
         tower.attack(enemies_list, waypoints, projectiles)
 
 def update_projectiles(clock_tick: int, projectiles: List[Projectile], enemies_list: list):
@@ -165,7 +158,6 @@ def run_main_menu(screen, clock):
     while running:
         mouse_pos = pg.mouse.get_pos()
         for event in pg.event.get():
-
             if event.type == pg.QUIT:
                 running = False
                 next_state = GameState.QUIT
@@ -289,7 +281,7 @@ def run_game_loop(screen, clock, selected_level_config):
     wave_preparation_timer = 0
     time_since_last_spawn_in_wave = 0
 
-    # Variables for managing enemy spawning sequence within a wave
+    # Enemy spawning state
     current_group_idx_in_wave = 0
     spawn_idx_within_group = 0
     inter_group_delay_timer = 0.0
@@ -301,11 +293,11 @@ def run_game_loop(screen, clock, selected_level_config):
     )
     bm.factories.clear()
     bm.towers.clear()
-    bm.building_rects.clear() # Ensure this line was added from previous advice
+    bm.building_rects.clear()
 
     level_was_won = False
-    show_fps = False # Variable to toggle FPS display
-    fps_font = pg.font.Font(None, 30) # Font for FPS display
+    show_fps = False
+    fps_font = pg.font.Font(None, 30)
 
     while game_state_internal == "running":
         clock_tick = clock.tick(con.FPS)
@@ -338,7 +330,7 @@ def run_game_loop(screen, clock, selected_level_config):
                     current_wave_data = waves_data_list[current_wave_index]
                     wave_preparation_timer = current_wave_data.get("P_time", 0) * 1000
 
-                    # Reset wave-specific spawning variables
+                    # Reset wave spawning state
                     time_since_last_spawn_in_wave = 0
                     current_group_idx_in_wave = 0
                     spawn_idx_within_group = 0
@@ -370,10 +362,10 @@ def run_game_loop(screen, clock, selected_level_config):
                         selected_blueprint = None
                     else:
                         is_paused = not is_paused
-                if event.key == pg.K_f: # Toggle FPS display
+                if event.key == pg.K_f:
                     show_fps = not show_fps
         if game_state_internal == "quit_to_menu":
-            return GameState.MAIN_MENU, level_was_won # Return to main menu if quit event occurs
+            return GameState.MAIN_MENU, level_was_won
 
         if current_game_mode == GameState.PRE_WAVE:
             if current_wave_index < len(waves_data_list):
@@ -384,7 +376,7 @@ def run_game_loop(screen, clock, selected_level_config):
         elif current_game_mode == GameState.WAVE_ACTIVE:
             wave_preparation_timer -= clock_tick
             if wave_preparation_timer <= 0 and current_wave_data:
-                # Handles the spawning of enemies in the current wave
+                # Enemy spawning logic
                 if inter_group_delay_timer > 0:
                     inter_group_delay_timer -= clock_tick
                     if inter_group_delay_timer < 0:
@@ -409,7 +401,7 @@ def run_game_loop(screen, clock, selected_level_config):
                             spawn_idx_within_group = 0
                             inter_group_delay_timer = delay_after_this_group_seconds * 1000.0
                     elif len(enemies_list) == 0:
-                        # Actions after all enemies in the current wave are cleared
+                        # After all enemies in the wave are cleared
                         resources_manager.add_resource("gold", current_wave_data.get("passive_gold", 0))
                         resources_manager.add_resource("wood", current_wave_data.get("passive_wood", 0))
                         resources_manager.add_resource("metal", current_wave_data.get("passive_metal", 0))
@@ -453,7 +445,7 @@ def run_game_loop(screen, clock, selected_level_config):
         
         if show_fps:
             fps_text = fps_font.render(f"FPS: {clock.get_fps():.2f}", True, pg.Color("white"))
-            screen.blit(fps_text, (10, screen.get_height() - 30)) # Display FPS at bottom-left
+            screen.blit(fps_text, (10, screen.get_height() - 30))
 
         abilities.draw(screen)
         ui.draw_pause_button(screen)
@@ -473,23 +465,21 @@ def run_game_loop(screen, clock, selected_level_config):
             clock.tick(con.FPS)
 
         if end_screen_action == "play_again":
-            return GameState.PRE_WAVE, False # Return to pre-wave state for the same level
+            return GameState.PRE_WAVE, False
         elif end_screen_action == "main_menu":
-            return GameState.LEVEL_SELECT, level_was_won # Return to level select
+            return GameState.LEVEL_SELECT, level_was_won
 
-    return GameState.LEVEL_SELECT, level_was_won # Default return to level select
+    return GameState.LEVEL_SELECT, level_was_won
 
 def load_levels_config(file_path, default_config):
     try:
         with open(file_path, 'r') as f:
             return json.load(f)
     except FileNotFoundError:
-        # Configuration file not found, create one with default settings
         print(f"'{file_path}' not found. Creating with default configuration.")
         save_levels_config(file_path, default_config)
         return default_config
     except json.JSONDecodeError:
-        # Error reading configuration file, use default settings and save them
         print(f"Error decoding JSON from '{file_path}'. Using default configuration.")
         save_levels_config(file_path, default_config)
         return default_config
@@ -499,13 +489,12 @@ def save_levels_config(file_path, config_data):
         with open(file_path, 'w') as f:
             json.dump(config_data, f, indent=4)
     except IOError:
-        # Error saving configuration
         print(f"Error: Could not save levels configuration to '{file_path}'.")
 
 
 if __name__ == "__main__":
     screen, clock = initialize_game()
-    os.makedirs(con.DATA_DIR, exist_ok=True) # Ensure data directory exists
+    os.makedirs(con.DATA_DIR, exist_ok=True)
     levels_config_filepath = os.path.join(con.DATA_DIR, LEVELS_CONFIG_FILENAME)
     LEVELS_CONFIG = load_levels_config(levels_config_filepath, con.LEVELS_CONFIG)
     application_state = GameState.MAIN_MENU
@@ -521,7 +510,7 @@ if __name__ == "__main__":
                 next_app_state_from_game, level_was_won = run_game_loop(screen, clock, selected_level_conf)
                 application_state = next_app_state_from_game
                 if level_was_won:
-                    # Unlock the next level if the current one was won
+                    # Unlock next level if current was won
                     current_level_index = -1
                     for i, lc in enumerate(LEVELS_CONFIG):
                         if lc["id"] == selected_level_conf["id"]:
@@ -533,7 +522,19 @@ if __name__ == "__main__":
                             save_levels_config(levels_config_filepath, LEVELS_CONFIG)
                             print(f"Unlocked and saved: {LEVELS_CONFIG[current_level_index + 1]['name']}")
             else:
-                # If no level is selected (e.g., backed out from level select), return to main menu
                 application_state = GameState.MAIN_MENU
     pg.quit()
 
+def can_build_at(position, blueprint, resource_manager, road_segments, road_thickness=100):
+    # Check if building can be placed at position
+    candidate_rect = pg.Rect(position[0], position[1], blueprint.width, blueprint.height)
+    for existing_rect in bm.building_rects:
+        if candidate_rect.colliderect(existing_rect):
+            return False
+    for road_segment in road_segments:
+        if candidate_rect.colliderect(road_segment):
+            return False
+    if candidate_rect.left < 0 or candidate_rect.top < 0 or \
+       candidate_rect.right > con.SCREEN_WIDTH or candidate_rect.bottom > con.SCREEN_HEIGHT:
+        return False
+    return True
