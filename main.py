@@ -57,7 +57,7 @@ def load_assets(level_config):
                           bm.build_factory, resource="wood", payout_per_wave=15),
     ]
 
-    # Master list of all possible tower blueprints
+    # Master list of all possible tower blueprint
     all_tower_blueprints_data = [
         {"name": "Tower - basic", "image": tower_basic_img, "cost": {"gold": 50}, "width": 40, "height": 40, "build_function": bm.build_tower, "tower_type": "basic"},
         {"name": "Tower - cannon", "image": tower_cannon_img, "cost": {"gold": 150, "wood": 70, "metal": 20}, "width": 40, "height": 40, "build_function": bm.build_tower, "tower_type": "cannon"},
