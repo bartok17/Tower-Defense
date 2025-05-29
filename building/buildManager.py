@@ -41,7 +41,7 @@ def build_tower(position, blueprint, resource_manager):
     return False
 
 def can_build_at(position, blueprint, resource_manager, road_segments, road_thickness=100):
-    candidate_rect = pg.Rect(position[0] - blueprint.width // 2, position[1] - blueprint.height // 2, blueprint.width, blueprint.height)
+    candidate_rect = pg.Rect(position[0], position[1], blueprint.width, blueprint.height)
     
     for existing_rect in building_rects:
         if candidate_rect.colliderect(existing_rect):

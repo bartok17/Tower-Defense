@@ -297,6 +297,7 @@ def run_game_loop(screen, clock, selected_level_config):
 
     level_was_won = False
     show_fps = False
+    show_roads = False 
     fps_font = pg.font.Font(None, 30)
 
     while game_state_internal == "running":
@@ -364,6 +365,8 @@ def run_game_loop(screen, clock, selected_level_config):
                         is_paused = not is_paused
                 if event.key == pg.K_f:
                     show_fps = not show_fps
+                if event.key == pg.K_r: 
+                    show_roads = not show_roads
         if game_state_internal == "quit_to_menu":
             return GameState.MAIN_MENU, level_was_won
 
@@ -428,7 +431,8 @@ def run_game_loop(screen, clock, selected_level_config):
 
         screen.fill("black")
         screen.blit(map_img, (0, 0))
-        draw_waypoints(screen, waypoints)
+        if show_roads: # Conditionally draw waypoints
+            draw_waypoints(screen, waypoints)
         ui.draw_resources(screen, resources_manager.resources, wave_index=current_wave_index, total_waves=len(waves_data_list))
         ui.draw_build_panel(screen, factory_buttons, tower_buttons)
         bm.draw_factories(screen)
@@ -524,17 +528,3 @@ if __name__ == "__main__":
             else:
                 application_state = GameState.MAIN_MENU
     pg.quit()
-
-def can_build_at(position, blueprint, resource_manager, road_segments, road_thickness=100):
-    # Check if building can be placed at position
-    candidate_rect = pg.Rect(position[0], position[1], blueprint.width, blueprint.height)
-    for existing_rect in bm.building_rects:
-        if candidate_rect.colliderect(existing_rect):
-            return False
-    for road_segment in road_segments:
-        if candidate_rect.colliderect(road_segment):
-            return False
-    if candidate_rect.left < 0 or candidate_rect.top < 0 or \
-       candidate_rect.right > con.SCREEN_WIDTH or candidate_rect.bottom > con.SCREEN_HEIGHT:
-        return False
-    return True
