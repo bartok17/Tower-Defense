@@ -12,6 +12,7 @@ class Button():
     self.hover_progress = 0.0
     self.hover_speed = 0.1
     self.label = label
+    self.text = text
     # Determine the final image for the button
     if image:
         self.image = image

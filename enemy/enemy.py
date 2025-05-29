@@ -1,3 +1,4 @@
+import time
 import pygame as pg
 import math 
 import enemy.abstractEnemyAbilities as aea 
@@ -24,6 +25,7 @@ class Enemy:
         self.damage_multiplier = 1
         self.damage = template.get("damage", 10)
 
+        self.is_invisible = False
         self.abilities = Abilities()
         for name in template.get("abilities", []):
             self.abilities.add_ability(name)
@@ -32,6 +34,7 @@ class Enemy:
         self.color = tuple(template.get("color", [255, 255, 255]))
         self.radius = template.get("radius", 10)
         self.shape = template.get("shape", "circle")
+        
         self.special_texts = []
         self.incoming_damage = 0
         self.gold_reward = template.get("gold_reward", 5)
@@ -88,7 +91,9 @@ class Enemy:
             ft["lifetime"] -= clock_tick / 1000.0
             ft["pos"].y -= 0.2 
             if ft["lifetime"] <= 0: self.special_texts.remove(ft)
-
+        if hasattr(self, "disabled_abilities") and self.disabled_abilities["active"]:
+            if time.time() > self.disabled_abilities["expires_at"]:
+                self.disabled_abilities["active"] = False
     def draw(self, map_surface):
         # Draw the pre-rendered enemy shape.
         if self._pre_rendered_shape:

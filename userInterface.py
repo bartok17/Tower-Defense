@@ -7,11 +7,18 @@ class UserInterface:
         self.small_font = pg.font.Font(font, 24)
         self.hud = IconHUD(con.ICON_PATHS, font=font)
         self.build_panel_open = False
+        self.ability_buttons = []
         self.toggle_button = Button(
         x=0, y=0, image=None,
         text="<", font_size=24, text_color=(255,255,255),
-        width=30, height=30, color=(50,50,50)
-)
+        width=30, height=30, color=(50,50,50))
+        self.pause_button = Button(
+        x=10,
+        y=con.SCREEN_HEIGHT - 50, 
+        image=None,
+        text="II", font_size=22, text_color=(0, 0, 0),
+        width=30, height=30, color=(255, 255, 0)
+        )
     def draw_resources(self, screen, resources: dict, wave_index=None, total_waves=None):
         if wave_index is not None and total_waves is not None:
             resources["wave"] = f"{wave_index + 1}/{total_waves}"
@@ -41,6 +48,8 @@ class UserInterface:
                 "factories": factory_buttons,
                 "towers": tower_buttons
             }, base_x=actual_panel_x + 10)
+        if self.build_panel_open and hasattr(self, "ability_buttons"):
+            self.draw_ability_grid(screen, actual_panel_x + 10, screen.get_height() - 120)
         self.toggle_button.draw(screen)
 
     def handle_panel_toggle(self, event, screen_width, screen_height):
@@ -51,7 +60,26 @@ class UserInterface:
         if event.type == pg.MOUSEBUTTONDOWN and event.button == 1:
             if self.toggle_button.is_clicked(pg.mouse.get_pos()):
                 self.build_panel_open = not self.build_panel_open
-                self.toggle_button.text = "⮜" if self.build_panel_open else "⮞"
+                self.toggle_button.text = "<" if self.build_panel_open else ">"
+    def draw_pause_button(self, screen):
+        self.pause_button.draw(screen)
+        if self.pause_button.rect.collidepoint(pg.mouse.get_pos()):
+            tip = self.small_font.render("Pause (Esc)", True, (255, 255, 255))
+            screen.blit(tip, (self.pause_button.rect.right + 8, self.pause_button.rect.centery - tip.get_height() // 2))
+    def is_pause_button_clicked(self, mouse_pos): return self.pause_button.is_clicked(mouse_pos)
+    def draw_ability_grid(self, screen, base_x, base_y, button_size=(80, 40), spacing=10, cols=2):
+        for i, btn in enumerate(self.ability_buttons):
+            col = i % cols
+            row = i // cols
+            x = base_x + col * (button_size[0] + spacing)
+            y = base_y + row * (button_size[1] + spacing)
+            btn.rect.topleft = (x, y)
+            btn.draw(screen)
+    def get_clicked_ability(self, mouse_pos):
+        for btn in self.ability_buttons:
+            if btn.is_clicked(mouse_pos):
+                return btn.text.lower()
+        return None
 class IconHUD:
     def __init__(self, icon_paths: dict, font=None):
         self.font = pg.font.Font(font, 28)
