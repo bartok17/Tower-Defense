@@ -78,17 +78,13 @@ def load_assets(level_config):
 
     factory_buttons = []
     tower_buttons = []
-    # Button positioning can remain similar, but will now use the filtered blueprints
-    # Assuming UserInterface or button drawing logic handles positioning dynamically or you adjust here
-    # For simplicity, this example keeps the original button creation loop structure
-    # but iterates over the filtered `level_tower_blueprints`.
+  
 
-    for i, blueprint in enumerate(factory_blueprints): # Factories are not level-restricted in this example
+    for i, blueprint in enumerate(factory_blueprints): 
         btn = Button(0, 0, blueprint.image, blueprint.name, width=blueprint.width, height=blueprint.height, )
         factory_buttons.append(btn)
 
     for i, blueprint in enumerate(level_tower_blueprints):
-        # You might want to adjust button positioning if the number of towers changes significantly
         btn = Button(con.SCREEN_WIDTH - 80, 50 + i * 60, blueprint.image, blueprint.name, width=blueprint.width, height=blueprint.height)
         tower_buttons.append(btn)
         

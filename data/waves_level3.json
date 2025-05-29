@@ -1,0 +1,142 @@
+{
+    "1": {
+      "id": 1,
+      "P_time": 2,
+      "inter_wave_delay": 5,
+      "passive_gold": 150,
+      "passive_wood": 50,
+      "passive_metal": 25,
+      "units": [
+        [
+          2,
+          8,
+          1.0,
+          500
+        ]
+      ],
+      "mode": 1
+    },
+    "2": {
+      "id": 2,
+      "P_time": 2,
+      "inter_wave_delay": 5,
+      "passive_gold": 40,
+      "passive_wood": 25,
+      "passive_metal": 25,
+      "units": [
+        [
+          4,
+          10,
+          1.0,
+          1000
+        ]
+
+      ],
+      "mode": 1
+    },
+    "3": {
+      "id": 3,
+      "P_time": 2,
+      "inter_wave_delay": 5,
+      "passive_gold": 50,
+      "passive_wood": 25,
+      "passive_metal": 25,
+      "units": [
+        [
+          5,
+          5,
+          1.0,
+          1000
+        ]
+      ],
+      "mode": 1
+    },
+    "5": {
+      "id": 5,
+      "P_time": 2,
+      "inter_wave_delay": 5,
+      "passive_gold": 0,
+      "passive_wood": 25,
+      "passive_metal": 25,
+      "units": [
+        [
+          5,
+          5,
+          1.0,
+          1000
+        ],
+        [
+          1,
+          30,
+          1.0,
+          500
+        ],
+        [
+          3,
+          30,
+          1.0,
+          200
+        ]
+      ],
+      "mode": 1
+    },
+    "6": {
+      "id": 6,
+      "P_time": 2,
+      "inter_wave_delay": 5,
+      "passive_gold": 0,
+      "passive_wood": 25,
+      "passive_metal": 25,
+      "units": [
+        [
+          4,
+          5,
+          1.0,
+          4000
+        ],
+        [
+          5,
+          10,
+          1.0,
+          1000
+        ],
+        [
+          3,
+          60,
+          1.0,
+          100
+        ],
+        [
+            4,
+            20,
+            1.0,
+            4000
+          ]
+  
+      ],
+      "mode": 1
+    },
+    "7": {
+      "id": 7,
+      "P_time": 2,
+      "inter_wave_delay": 5,
+      "passive_gold": 0,
+      "passive_wood": 50,
+      "passive_metal": 0,
+      "units": [
+        [
+          5,
+          30,
+          1.0,
+          500
+        ],
+        [
+          3,
+          200,
+          1.0,
+          50
+        ]
+      ],
+      "mode": 1
+    }
+  }
