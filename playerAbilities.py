@@ -2,14 +2,13 @@ import time
 import pygame as pg
 from economy.resourcesManager import ResourcesManager
 
-
 class PlayerAbilities:
     def __init__(self):
         self.selected_skill = None
         self.costs = {
             "fireball": {"gold": 70},
             "scanner": {"gold": 30, "metal": 15, "wood": 15},
-            "disruptor" : {"gold": 100, "metal": 30, "wood": 30},
+            "disruptor": {"gold": 100, "metal": 30, "wood": 30},
             "glue": {"gold": 10, "wood": 50}
         }
         self.active_effects = {
@@ -28,11 +27,15 @@ class PlayerAbilities:
         self.pos = None
         self.last_target_pos = None
         self.recent_strike_timer = 0
+        self.scanner_timer = 0.0
+        self.glue_timer = 0.0
+        self.disruptor_timer = 0.0
 
     def can_use(self, name, resources_manager):
         return resources_manager.can_afford(self.costs.get(name, {}))
 
     def use(self, name, resources_manager, pos=None, enemies=None):
+        # If no position is given, just select the skill for later use
         if pos is None:
             self.selected_skill = name
             return False  
@@ -48,9 +51,7 @@ class PlayerAbilities:
         elif name == "glue":
             self.activate_glue(pos)
         self.selected_skill = None
-        
         return True
-
 
     def fireball(self, pos, enemies):
         self.last_target_pos = pg.Vector2(pos)
@@ -63,23 +64,24 @@ class PlayerAbilities:
 
     def activate_scanner(self):
         self.active_effects["scanner"]["active"] = True
-        self.active_effects["scanner"]["start_time"] = time.time()
+        self.scanner_timer = 0.0
         self.pos = pg.Vector2(pg.mouse.get_pos())
+
     def activate_glue(self, pos):
         self.active_effects["glue"]["active"] = True
-        self.active_effects["glue"]["start_time"] = time.time()
+        self.glue_timer = 0.0
         self.active_effects["glue"]["pos"] = pg.Vector2(pos)
 
     def activate_disruptor(self, pos, enemies):
         radius = 120
         duration = 10.0
         center = pg.Vector2(pos)
-
         for enemy in enemies:
             if enemy.pos.distance_to(center) <= radius:
+                # Disable enemy abilities for duration
                 enemy.disabled_abilities = {
                     "active": True,
-                    "expires_at": time.time() + duration
+                    "expires_in": duration
                 }
                 if hasattr(enemy, 'special_texts'):
                     enemy.special_texts.append({
@@ -91,22 +93,26 @@ class PlayerAbilities:
         self.last_target_pos = center
         self.active_effects["disruptor"] = {
             "active": True,
-            "start_time": time.time(),
+            "timer": 0.0,
             "duration": duration
         }
 
     def update(self, enemies, tick):
+        # Handle fireball strike effect timer
         if self.recent_strike_timer > 0:
             self.recent_strike_timer -= tick
             if self.recent_strike_timer < 0:
                 self.recent_strike_timer = 0
                 self.last_target_pos = None
+
+        # Scanner effect: reveal invisible enemies in radius
         scanner = self.active_effects["scanner"]
         if scanner["active"] and self.pos:
-            now = time.time()
-            if now - scanner["start_time"] > scanner["duration"]:
+            self.scanner_timer += tick
+            if self.scanner_timer >= scanner["duration"] * 1000:
                 scanner["active"] = False
                 self.pos = None
+                self.scanner_timer = 0.0
             else:
                 scanner_radius = 150
                 for e in enemies:
@@ -114,17 +120,15 @@ class PlayerAbilities:
                         if pg.Vector2(e.pos).distance_to(self.pos) <= scanner_radius:
                             e.abilities.remove_ability("invisible")
                             e.is_invisible = False
-        dis = self.active_effects.get("disruptor", {})
-        if dis.get("active", False):
-            if time.time() - dis["start_time"] > dis["duration"]:
-                dis["active"] = False
-                self.last_target_pos = None
+
+        # Glue effect: slow enemies in radius, only once per enemy
         glue = self.active_effects["glue"]
         if glue["active"] and glue["pos"]:
-            now = time.time()
-            if now - glue["start_time"] > glue["duration"]:
+            self.glue_timer += tick
+            if self.glue_timer >= glue["duration"] * 1000:
                 glue["active"] = False
                 glue["pos"] = None
+                self.glue_timer = 0.0
             else:
                 radius = 100
                 for e in enemies:
@@ -139,24 +143,36 @@ class PlayerAbilities:
                                 "color": (100, 150, 255)
                             })
 
+        # Disruptor effect: manage duration and cleanup
+        dis = self.active_effects.get("disruptor", {})
+        if dis.get("active", False):
+            dis["timer"] += tick
+            if dis["timer"] >= dis["duration"] * 1000:
+                dis["active"] = False
+                self.last_target_pos = None
+                dis["timer"] = 0.0
 
     def draw(self, screen):
+        # Draw fireball strike indicator
         if self.last_target_pos and self.recent_strike_timer > 0:
             radius = 80
             color = (255, 50, 0)
             pg.draw.circle(screen, color, (int(self.last_target_pos.x), int(self.last_target_pos.y)), radius, 3)
+        # Draw scanner effect overlay
         if self.active_effects["scanner"]["active"] and self.pos:
             radius = 150
             alpha = 80  
             overlay = pg.Surface((radius * 2, radius * 2), pg.SRCALPHA)
             pg.draw.circle(overlay, (0, 200, 0, alpha), (radius, radius), radius, 3)
             screen.blit(overlay, (self.pos.x - radius, self.pos.y - radius))
+        # Draw disruptor effect overlay
         if self.active_effects.get("disruptor", {}).get("active", False) and self.last_target_pos:
             radius = 120
             alpha = 90
             overlay = pg.Surface((radius * 2, radius * 2), pg.SRCALPHA)
             pg.draw.circle(overlay, (255, 255, 0, alpha), (radius, radius), radius, 3)
             screen.blit(overlay, (self.last_target_pos.x - radius, self.last_target_pos.y - radius))
+        # Draw glue effect overlay
         if self.active_effects.get("glue", {}).get("active", False) and self.active_effects.get("glue", {}).get("pos"):
             radius = 100
             alpha = 60

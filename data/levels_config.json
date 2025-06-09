@@ -55,5 +55,26 @@
             "flame",
             "ice"
         ]
+    },
+    {
+        "id": "level4",
+        "name": "hexagon valley test",
+        "map_image_path": "map3.png",
+        "waypoints_path": "map4_waypoints.json",
+        "waves_path": "waves_level4.json",
+        "thumbnail_path": "level4_thumb.png",
+        "unlocked": true,
+        "start_gold": 3000000,
+        "start_wood": 10000,
+        "start_metal": 50000,
+        "are_abilities_enabled": false,
+        "available_towers": [
+            "basic",
+            "rapid",
+            "sniper",
+            "cannon",
+            "flame",
+            "ice"
+        ]
     }
 ]

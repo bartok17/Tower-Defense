@@ -5,6 +5,7 @@ from Tower import create_tower
 factories = []
 towers = []
 building_rects = []
+# ... other global lists if any related to build state ...
 
 def build_factory(position, blueprint, resource_manager):
     cost = blueprint.cost
@@ -102,3 +103,10 @@ def draw_factories(screen):
 def update_factories(delta_time, resource_manager):
     for factory in factories:
         factory.update(delta_time, resource_manager)
+
+def reset_build_state():
+    global factories, towers, building_rects
+    factories.clear()
+    towers.clear()
+    building_rects.clear()
+    # print("Build manager state reset.") # Optional: for debugging

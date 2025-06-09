@@ -53,7 +53,7 @@
       0,
       255
     ],
-    "radius": 10,
+    "radius": 5,
     "abilities": [
       
     ],
@@ -74,7 +74,7 @@
       42,
       42
     ],
-    "radius": 10,
+    "radius": 15,
     "abilities": [
       
     ],
@@ -116,7 +116,7 @@
       128,
       128
     ],
-    "radius": 10,
+    "radius": 7,
     "abilities": [
       
     ],

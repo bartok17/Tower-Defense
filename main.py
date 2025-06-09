@@ -12,7 +12,7 @@ from projectile import Projectile
 import building.buildManager as bm
 from endingScreen import EndingScreen
 from userInterface import UserInterface
-from pauseScreen import PauseScreen
+# from pauseScreen import PauseScreen 
 from playerAbilities import PlayerAbilities
 import os
 import json
@@ -94,13 +94,15 @@ def draw_waypoints(screen, waypoints):
         pg.draw.lines(screen, "red", False, road, 2)
 
 def update_enemies(clock_tick, enemies_list, base, resources_manager):
+    # Update all enemies and handle their removal and rewards
     for e in enemies_list:
         e.all_enemies = enemies_list
         e.enemies_ref = enemies_list
     for enemy in enemies_list[:]:
         enemy.update(clock_tick)
         if enemy.has_finished():
-            resources_manager.spend_resource("health", 10)
+            resources_manager.spend_resource("health", enemy.damage) 
+            resources_manager.add_resource("gold", enemy.gold_reward) 
             enemies_list.remove(enemy)
             continue
         if enemy.is_dead():
@@ -108,6 +110,7 @@ def update_enemies(clock_tick, enemies_list, base, resources_manager):
             resources_manager.add_resource("gold", enemy.gold_reward)
 
 def update_towers(clock_tick, towers, enemies_list, waypoints, projectiles):
+    # Update tower reloads and trigger attacks
     delta_time_seconds = clock_tick / 1000.0
     for tower in towers:
         if tower.current_reload > 0:
@@ -128,6 +131,7 @@ def update_towers(clock_tick, towers, enemies_list, waypoints, projectiles):
         tower.attack(enemies_list, waypoints, projectiles)
 
 def update_projectiles(clock_tick: int, projectiles: List[Projectile], enemies_list: list):
+    # Update projectiles and remove inactive ones
     for projectile in projectiles[:]:
         projectile.update(clock_tick, enemies_list)
         if not projectile.active:
@@ -239,7 +243,7 @@ def run_level_select(screen, clock, levels_config):
 
     return next_state, selected_level_config
 
-def run_game_loop(screen, clock, selected_level_config):
+def run_game_loop(screen, clock, selected_level_config, levels_config_list): 
     (map_img, button_img, waypoints,
     factory_buttons, factory_blueprints,
     tower_buttons, tower_blueprints) = load_assets(selected_level_config)
@@ -274,8 +278,12 @@ def run_game_loop(screen, clock, selected_level_config):
             Button(0, 0, None, text="Disruptor", text_color=(0,0,0), font_size=20, width=90, height=40, color=(255,255,0)),
             Button(0, 0, None, text="Glue", text_color=(255,255,255), font_size=20, width=90, height=40, color=(100,100,255)),
         ]
-    pause = PauseScreen(screen)
     is_paused = False
+    
+    bm.reset_build_state()
+    projectiles.clear() 
+    enemies_list.clear()
+
     road_seg = bm.generate_road_segments(waypoints)
     current_wave_data = None
     wave_preparation_timer = 0
@@ -288,7 +296,7 @@ def run_game_loop(screen, clock, selected_level_config):
 
     start_wave_button = Button(
         con.SCREEN_WIDTH // 2 - 100, con.SCREEN_HEIGHT - 70, None,
-        text=f"Start Wave {current_wave_index + 1}", text_color=(255, 255, 255), font_size=28,
+        text=f"Start Wave", text_color=(255, 255, 255), font_size=28,
         width=200, height=40, color=(0, 150, 0)
     )
     bm.factories.clear()
@@ -301,46 +309,106 @@ def run_game_loop(screen, clock, selected_level_config):
     show_tower_ranges = False
     fps_font = pg.font.Font(None, 30)
 
+    # Pause menu UI
+    pause_font = pg.font.Font(None, 50)
+    pause_text_surface = pause_font.render("Paused", True, (200, 200, 200))
+    pause_text_rect = pause_text_surface.get_rect(center=(con.SCREEN_WIDTH // 2, con.SCREEN_HEIGHT // 2 - 100))
+
+    resume_button = Button(
+        con.SCREEN_WIDTH // 2 - 100, con.SCREEN_HEIGHT // 2 - 30, None,
+        text="Resume", text_color=(255, 255, 255), font_size=30,
+        width=200, height=50, color=(0, 180, 0)
+    )
+    restart_button_pause = Button(
+        con.SCREEN_WIDTH // 2 - 100, con.SCREEN_HEIGHT // 2 + 30, None,
+        text="Restart Level", text_color=(255, 255, 255), font_size=30,
+        width=200, height=50, color=(180, 180, 0)
+    )
+    quit_to_menu_button_pause = Button(
+        con.SCREEN_WIDTH // 2 - 100, con.SCREEN_HEIGHT // 2 + 90, None,
+        text="Quit to Menu", text_color=(255, 255, 255), font_size=30,
+        width=200, height=50, color=(180, 0, 0)
+    )
+    
+    pause_overlay = pg.Surface((con.SCREEN_WIDTH, con.SCREEN_HEIGHT), pg.SRCALPHA)
+    pause_overlay.fill((0, 0, 0, 128)) 
+
+    game_speed = 1.0
+
+    # Speed control buttons
+    speed_button_margin = 20
+    speed_button_width = 50
+    speed_button_height = 40
+    speed_text_width = 60
+
+    slow_button_x = con.SCREEN_WIDTH - (speed_button_width * 2 + speed_text_width + speed_button_margin * 3)
+    slow_button_y = con.SCREEN_HEIGHT - speed_button_height - speed_button_margin
+    fast_button_x = con.SCREEN_WIDTH - (speed_button_width + speed_button_margin)
+    fast_button_y = slow_button_y
+    speed_text_x = con.SCREEN_WIDTH - (speed_button_width + speed_text_width + speed_button_margin * 2)
+    speed_text_y = slow_button_y + (speed_button_height // 2) - 12
+
+    slow_button = Button(slow_button_x, slow_button_y, None, text="<<", text_color=(255,255,255), font_size=28, width=speed_button_width, height=speed_button_height, color=(80,80,80))
+    fast_button = Button(fast_button_x, fast_button_y, None, text=">>", text_color=(255,255,255), font_size=28, width=speed_button_width, height=speed_button_height, color=(80,80,80))
+    speed_font = pg.font.Font(None, 28)
+
     while game_state_internal == "running":
-        clock_tick = clock.tick(con.FPS)
+        clock_tick_raw = clock.tick(con.FPS)
+        clock_tick = clock_tick_raw * game_speed
         mouse_pos = pg.mouse.get_pos()
-        if is_paused:
-            pause.draw()
-            state = pause.handle_events()
-            if state == "resume":
-                is_paused = False
-            elif state == "quit":
-                return GameState.QUIT, False
-            continue
+
         for event in pg.event.get():
-            ui.handle_panel_toggle(event, con.SCREEN_WIDTH, con.SCREEN_HEIGHT)
+            if not is_paused: 
+                ui.handle_panel_toggle(event, con.SCREEN_WIDTH, con.SCREEN_HEIGHT)
+
             if event.type == pg.QUIT:
-                game_state_internal = "quit_to_menu"
+                game_state_internal = "quit_to_menu" 
+               
             if event.type == pg.MOUSEBUTTONDOWN and event.button == 1:
-                skill = ui.get_clicked_ability(mouse_pos)
-                if skill:
-                    abilities.use(skill, resources_manager)  
+                # Handle speed control
+                if slow_button.is_clicked(mouse_pos):
+                    game_speed = max(0.25, game_speed / 2)
                     continue
-                if abilities.selected_skill is not None:
-                    abilities.use(abilities.selected_skill, resources_manager, pos=mouse_pos, enemies=enemies_list)
-                if ui.is_pause_button_clicked(mouse_pos): is_paused = True
-                clicked_on_ui_button_this_frame = False
-                if current_game_mode == GameState.PRE_WAVE and \
-                   current_wave_index < len(waves_data_list) and \
-                   start_wave_button.is_clicked(mouse_pos):
-                    current_game_mode = GameState.WAVE_ACTIVE
-                    current_wave_data = waves_data_list[current_wave_index]
-                    wave_preparation_timer = current_wave_data.get("P_time", 0) * 1000
+                if fast_button.is_clicked(mouse_pos):
+                    game_speed = min(4.0, game_speed * 2)
+                    continue
+                if is_paused:
+                    if resume_button.is_clicked(mouse_pos):
+                        is_paused = False
+                    elif restart_button_pause.is_clicked(mouse_pos):
+                        return GameState.PRE_WAVE, False 
+                    elif quit_to_menu_button_pause.is_clicked(mouse_pos):
+                        game_state_internal = "quit_to_menu"
+                    continue 
+                else:
+                    if ui.is_pause_button_clicked(mouse_pos):
+                        is_paused = True
+                        selected_blueprint = None 
+                        continue 
 
-                    # Reset wave spawning state
-                    time_since_last_spawn_in_wave = 0
-                    current_group_idx_in_wave = 0
-                    spawn_idx_within_group = 0
-                    inter_group_delay_timer = 0.0
+                    skill = ui.get_clicked_ability(mouse_pos)
+                    if skill:
+                        abilities.use(skill, resources_manager)  
+                        continue
+                    if abilities.selected_skill is not None:
+                        abilities.use(abilities.selected_skill, resources_manager, pos=mouse_pos, enemies=enemies_list)
+                    clicked_on_ui_button_this_frame = False
+                    if current_game_mode == GameState.PRE_WAVE and \
+                       current_wave_index < len(waves_data_list) and \
+                       start_wave_button.is_clicked(mouse_pos):
+                        current_game_mode = GameState.WAVE_ACTIVE
+                        current_wave_data = waves_data_list[current_wave_index]
+                        wave_preparation_timer = current_wave_data.get("P_time", 0) * 1000
 
-                    start_wave_button.text = f"Wave {current_wave_index + 1} Active"
-                    selected_blueprint = None
-                    clicked_on_ui_button_this_frame = True
+                        # Reset wave spawning state
+                        time_since_last_spawn_in_wave = 0
+                        current_group_idx_in_wave = 0
+                        spawn_idx_within_group = 0
+                        inter_group_delay_timer = 0.0
+
+                        start_wave_button.text = f"Wave {current_wave_index + 1} Active"
+                        selected_blueprint = None
+                        clicked_on_ui_button_this_frame = True
                 if not clicked_on_ui_button_this_frame:
                     for idx, btn in enumerate(factory_buttons):
                         if btn.is_clicked(mouse_pos):
@@ -364,72 +432,77 @@ def run_game_loop(screen, clock, selected_level_config):
                         selected_blueprint = None
                     else:
                         is_paused = not is_paused
-                if event.key == pg.K_f:
-                    show_fps = not show_fps
-                if event.key == pg.K_r: 
-                    show_roads = not show_roads
-                if event.key == pg.K_v:
-                    show_tower_ranges = not show_tower_ranges
+                if not is_paused: 
+                    if event.key == pg.K_f:
+                        show_fps = not show_fps
+                    if event.key == pg.K_r: 
+                        show_roads = not show_roads
+                    if event.key == pg.K_v:
+                        show_tower_ranges = not show_tower_ranges
+
         if game_state_internal == "quit_to_menu":
-            return GameState.MAIN_MENU, level_was_won
+            return GameState.MAIN_MENU, level_was_won, None 
 
-        if current_game_mode == GameState.PRE_WAVE:
-            if current_wave_index < len(waves_data_list):
-                 start_wave_button.text = f"Start Wave {current_wave_index + 1}"
-            else:
-                 start_wave_button.text = "All Waves Cleared!"
-
-        elif current_game_mode == GameState.WAVE_ACTIVE:
-            wave_preparation_timer -= clock_tick
-            if wave_preparation_timer <= 0 and current_wave_data:
-                # Enemy spawning logic
-                if inter_group_delay_timer > 0:
-                    inter_group_delay_timer -= clock_tick
-                    if inter_group_delay_timer < 0:
-                        inter_group_delay_timer = 0.0
+        if is_paused:
+            pass
+        else:
+            if current_game_mode == GameState.PRE_WAVE:
+                if current_wave_index < len(waves_data_list):
+                     start_wave_button.text = f"Start Wave {current_wave_index + 1}"
                 else:
-                    enemy_groups_in_wave = current_wave_data.get("enemy_groups", [])
-                    if current_group_idx_in_wave < len(enemy_groups_in_wave):
-                        current_group_info = enemy_groups_in_wave[current_group_idx_in_wave]
-                        enemies_to_spawn_this_group = current_group_info["enemies_to_spawn"]
-                        delay_after_this_group_seconds = current_group_info["delay_after_group"]
-                        current_inter_enemy_spawn_delay = current_group_info.get("inter_enemy_spawn_delay_ms", 500)
+                     start_wave_button.text = "All Waves Cleared!"
 
-                        if spawn_idx_within_group < len(enemies_to_spawn_this_group):
-                            time_since_last_spawn_in_wave += clock_tick
-                            if time_since_last_spawn_in_wave >= current_inter_enemy_spawn_delay:
-                                enemy_instance = enemies_to_spawn_this_group[spawn_idx_within_group]
-                                enemies_list.append(enemy_instance)
-                                spawn_idx_within_group += 1
-                                time_since_last_spawn_in_wave = 0
-                        else:
-                            current_group_idx_in_wave += 1
-                            spawn_idx_within_group = 0
-                            inter_group_delay_timer = delay_after_this_group_seconds * 1000.0
-                    elif len(enemies_list) == 0:
-                        # All enemies in the wave are cleared
-                        resources_manager.add_resource("gold", current_wave_data.get("passive_gold", 0))
-                        resources_manager.add_resource("wood", current_wave_data.get("passive_wood", 0))
-                        resources_manager.add_resource("metal", current_wave_data.get("passive_metal", 0))
-                        for factory_instance in bm.factories:
-                            resource_type, amount = factory_instance.get_wave_payout()
-                            resources_manager.add_resource(resource_type, amount)
+            elif current_game_mode == GameState.WAVE_ACTIVE:
+                wave_preparation_timer -= clock_tick
+                if wave_preparation_timer <= 0 and current_wave_data:
+                    # Enemy spawning logic
+                    if inter_group_delay_timer > 0:
+                        inter_group_delay_timer -= clock_tick
+                        if inter_group_delay_timer < 0:
+                            inter_group_delay_timer = 0.0
+                    else:
+                        enemy_groups_in_wave = current_wave_data.get("enemy_groups", [])
+                        if current_group_idx_in_wave < len(enemy_groups_in_wave):
+                            current_group_info = enemy_groups_in_wave[current_group_idx_in_wave]
+                            enemies_to_spawn_this_group = current_group_info["enemies_to_spawn"]
+                            delay_after_this_group_seconds = current_group_info["delay_after_group"]
+                            current_inter_enemy_spawn_delay = current_group_info.get("inter_enemy_spawn_delay_ms", 500)
 
-                        current_wave_index += 1
-                        if current_wave_index >= len(waves_data_list):
-                            game_state_internal = "victory"
-                            level_was_won = True
-                        else:
-                            current_game_mode = GameState.PRE_WAVE
-                            start_wave_button.text = f"Start Wave {current_wave_index + 1}"
+                            if spawn_idx_within_group < len(enemies_to_spawn_this_group):
+                                time_since_last_spawn_in_wave += clock_tick
+                                if time_since_last_spawn_in_wave >= current_inter_enemy_spawn_delay:
+                                    enemy_instance = enemies_to_spawn_this_group[spawn_idx_within_group]
+                                    enemies_list.append(enemy_instance)
+                                    spawn_idx_within_group += 1
+                                    time_since_last_spawn_in_wave = 0
+                            else:
+                                current_group_idx_in_wave += 1
+                                spawn_idx_within_group = 0
+                                inter_group_delay_timer = delay_after_this_group_seconds * 1000.0
+                        elif len(enemies_list) == 0:
+                            # All enemies in the wave are cleared
+                            resources_manager.add_resource("gold", current_wave_data.get("passive_gold", 0))
+                            resources_manager.add_resource("wood", current_wave_data.get("passive_wood", 0))
+                            resources_manager.add_resource("metal", current_wave_data.get("passive_metal", 0))
+                            for factory_instance in bm.factories:
+                                resource_type, amount = factory_instance.get_wave_payout()
+                                resources_manager.add_resource(resource_type, amount)
 
-        bm.update_factories(clock_tick, resources_manager)
-        update_enemies(clock_tick, enemies_list, base, resources_manager)
-        update_towers(clock_tick, bm.towers, enemies_list, waypoints, projectiles)
-        update_projectiles(clock_tick, projectiles, enemies_list)
-        abilities.update(enemies_list, clock_tick / 1000.0)
+                            current_wave_index += 1
+                            if current_wave_index >= len(waves_data_list):
+                                game_state_internal = "victory"
+                                level_was_won = True
+                            else:
+                                current_game_mode = GameState.PRE_WAVE
+                                start_wave_button.text = f"Start Wave {current_wave_index + 1}"
 
-        if resources_manager.get_resource("health") <= 0:
+            bm.update_factories(clock_tick, resources_manager)
+            update_enemies(clock_tick, enemies_list, base, resources_manager)
+            update_towers(clock_tick, bm.towers, enemies_list, waypoints, projectiles)
+            update_projectiles(clock_tick, projectiles, enemies_list)
+            abilities.update(enemies_list, clock_tick / 1000.0)
+
+        if resources_manager.get_resource("health") <= 0 and not is_paused:
             game_state_internal = "game_over"
 
         screen.fill("black")
@@ -458,30 +531,64 @@ def run_game_loop(screen, clock, selected_level_config):
             screen.blit(fps_text, (10, screen.get_height() - 30))
 
         abilities.draw(screen)
-        ui.draw_pause_button(screen)
+        ui.draw_pause_button(screen) 
+
+        if is_paused:
+            screen.blit(pause_overlay, (0,0))
+            screen.blit(pause_text_surface, pause_text_rect)
+            resume_button.draw(screen)
+            restart_button_pause.draw(screen)
+            quit_to_menu_button_pause.draw(screen)
+
+        # Draw speed controls and current speed
+        slow_button.draw(screen)
+        fast_button.draw(screen)
+        speed_text = speed_font.render(f"{game_speed:.2f}x", True, (255,255,255))
+        screen.blit(speed_text, (speed_text_x, speed_text_y))
+
         pg.display.update()
 
     if game_state_internal == "quit_to_menu":
-        return GameState.MAIN_MENU, level_was_won
+        return GameState.MAIN_MENU, level_was_won, None
 
     if game_state_internal == "game_over" or game_state_internal == "victory":
-        end_screen = EndingScreen(screen, game_won=level_was_won)
+        next_level_exists_in_config = False
+        current_level_idx = -1
+        next_level_config_for_button = None
+
+        if level_was_won:
+            for i, lc in enumerate(levels_config_list):
+                if lc["id"] == selected_level_config["id"]:
+                    current_level_idx = i
+                    break
+            if current_level_idx != -1 and current_level_idx + 1 < len(levels_config_list):
+                next_level_exists_in_config = True
+                next_level_config_for_button = levels_config_list[current_level_idx + 1]
+        
+        end_screen = EndingScreen(screen, game_won=level_was_won, next_level_available=next_level_exists_in_config)
         end_screen_action = "running"
         while end_screen_action == "running":
-            end_screen_action, _ = end_screen.handle_events()
+            end_screen_action, _ = end_screen.handle_events() 
             if end_screen_action == "quit":
-                return GameState.QUIT, level_was_won
+                return GameState.QUIT, level_was_won, None
+            
             end_screen.draw()
             clock.tick(con.FPS)
 
-        if end_screen_action == "play_again":
-            return GameState.PRE_WAVE, False
-        elif end_screen_action == "main_menu":
-            return GameState.LEVEL_SELECT, level_was_won
+        if end_screen_action == "replay_current_level":
+            return GameState.PRE_WAVE, False, selected_level_config 
+        elif end_screen_action == "next_level":
+            if next_level_config_for_button:
+                 return GameState.PRE_WAVE, False, next_level_config_for_button
+            else: 
+                 return GameState.LEVEL_SELECT, level_was_won, None
+        elif end_screen_action == "main_menu": 
+            return GameState.LEVEL_SELECT, level_was_won, None
 
-    return GameState.LEVEL_SELECT, level_was_won
+    return GameState.LEVEL_SELECT, level_was_won, None
 
 def load_levels_config(file_path, default_config):
+    # Load levels config from file, or create it if missing/corrupt
     try:
         with open(file_path, 'r') as f:
             return json.load(f)
@@ -495,42 +602,75 @@ def load_levels_config(file_path, default_config):
         return default_config
 
 def save_levels_config(file_path, config_data):
+    # Save levels config to file
     try:
         with open(file_path, 'w') as f:
             json.dump(config_data, f, indent=4)
     except IOError:
         print(f"Error: Could not save levels configuration to '{file_path}'.")
 
-
 if __name__ == "__main__":
     screen, clock = initialize_game()
     os.makedirs(con.DATA_DIR, exist_ok=True)
     levels_config_filepath = os.path.join(con.DATA_DIR, LEVELS_CONFIG_FILENAME)
-    LEVELS_CONFIG = load_levels_config(levels_config_filepath, con.LEVELS_CONFIG)
+
+    # Use default config from constants or fallback to empty
+    default_levels_cfg = [] 
+    if hasattr(con, 'LEVELS_CONFIG'):
+        default_levels_cfg = con.LEVELS_CONFIG
+    else:
+        print("Warning: constants.LEVELS_CONFIG not found. Using an empty default for loading.")
+
+    LEVELS_CONFIG = load_levels_config(levels_config_filepath, default_levels_cfg)
+    
     application_state = GameState.MAIN_MENU
-    selected_level_conf = None
+    current_selected_level_config = None 
 
     while application_state != GameState.QUIT:
         if application_state == GameState.MAIN_MENU:
             application_state = run_main_menu(screen, clock)
+            if application_state == GameState.LEVEL_SELECT: 
+                current_selected_level_config = None 
         elif application_state == GameState.LEVEL_SELECT:
-            application_state, selected_level_conf = run_level_select(screen, clock, LEVELS_CONFIG)
+            application_state, newly_selected_config = run_level_select(screen, clock, LEVELS_CONFIG)
+            if newly_selected_config:
+                current_selected_level_config = newly_selected_config
         elif application_state == GameState.PRE_WAVE:
-            if selected_level_conf:
-                next_app_state_from_game, level_was_won = run_game_loop(screen, clock, selected_level_conf)
+            if current_selected_level_config:
+                played_level_config = current_selected_level_config 
+
+                next_app_state_from_game, level_was_won_for_unlocking, config_for_next_prewave = \
+                    run_game_loop(screen, clock, played_level_config, LEVELS_CONFIG)
+                
                 application_state = next_app_state_from_game
-                if level_was_won:
-                    # Unlock next level if current was won
-                    current_level_index = -1
+
+                if application_state == GameState.PRE_WAVE and config_for_next_prewave:
+                    current_selected_level_config = config_for_next_prewave
+
+                if level_was_won_for_unlocking:
+                    current_level_idx_for_unlock = -1
                     for i, lc in enumerate(LEVELS_CONFIG):
-                        if lc["id"] == selected_level_conf["id"]:
-                            current_level_index = i
+                        if lc["id"] == played_level_config["id"]: 
+                            current_level_idx_for_unlock = i
                             break
-                    if current_level_index != -1 and current_level_index + 1 < len(LEVELS_CONFIG):
-                        if not LEVELS_CONFIG[current_level_index + 1]["unlocked"]:
-                            LEVELS_CONFIG[current_level_index + 1]["unlocked"] = True
+                    
+                    if current_level_idx_for_unlock != -1 and \
+                       current_level_idx_for_unlock + 1 < len(LEVELS_CONFIG):
+                        next_level_to_unlock_idx = current_level_idx_for_unlock + 1
+                        if not LEVELS_CONFIG[next_level_to_unlock_idx]["unlocked"]:
+                            LEVELS_CONFIG[next_level_to_unlock_idx]["unlocked"] = True
                             save_levels_config(levels_config_filepath, LEVELS_CONFIG)
-                            print(f"Unlocked and saved: {LEVELS_CONFIG[current_level_index + 1]['name']}")
+                            print(f"Unlocked and saved: {LEVELS_CONFIG[next_level_to_unlock_idx]['name']}")
             else:
+                print("Error: PRE_WAVE state reached without a selected level. Returning to Main Menu.")
                 application_state = GameState.MAIN_MENU
+                current_selected_level_config = None
+        
+        elif application_state == GameState.QUIT:
+            break 
+        
+        else: 
+            print(f"Warning: Unknown application state {application_state}. Quitting.")
+            application_state = GameState.QUIT
+
     pg.quit()
