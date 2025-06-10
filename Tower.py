@@ -1,4 +1,5 @@
 # Tower.py
+
 from Button import Button
 from enemy.enemy import Enemy
 from dummyEntity import dummyEntity
@@ -20,6 +21,7 @@ class TowerStats:
                  tower_visual_points: list = None,
                  tower_visual_size: int = 8,
                  tower_visual_color: tuple = (200, 200, 200)):
+        # Tower stats and visuals
         self.explosive = explosive
         self.explosion_radius = explosion_radius
         self.range = range
@@ -34,8 +36,6 @@ class TowerStats:
         self.projectile_color2 = projectile_color2
         self.projectile_size = projectile_size
         self.projectile_speed = projectile_speed
-
-        # Visual representation attributes
         self.tower_visual_shape_type = tower_visual_shape_type
         self.tower_visual_points = tower_visual_points if tower_visual_points is not None else []
         self.tower_visual_size = tower_visual_size
@@ -44,6 +44,7 @@ class TowerStats:
     def upgrade(self, range_increase=0, damage_increase=0, reload_time_decrease=0,
                   magazine_size_increase=0, magazine_reload_time_decrease=0,
                   max_targets_increase=0, projectile_speed_increase=0):
+        # Upgrade tower stats
         self.range += range_increase
         self.damage += damage_increase
         self.reload_time = max(0.01, self.reload_time - reload_time_decrease)
@@ -61,13 +62,14 @@ class Tower:
         self.current_magazine_shots = stats.magazine_size
         self.is_reloading_magazine = False
         self.current_magazine_reload_timer = 0
-        self.angle = 0.0  # Angle in degrees, 0 points right
+        self.angle = 0.0  # Facing angle in degrees
 
     def is_in_range(self, enemy: Enemy) -> bool:
+        # Check if enemy is within range
         return self.pos.distance_to(pg.math.Vector2(enemy.pos)) <= self.stats.range
 
     def attack(self, enemies: list[Enemy], waypoints: list[tuple[int, int]], projectiles: list[Projectile]):
-        # Find valid targets in range and update tower angle
+        # Find valid targets and fire projectiles
         potential_targets = []
         for enemy_candidate in enemies:
             if enemy_candidate.has_ability(aea.invisibleAbility):
@@ -92,18 +94,17 @@ class Tower:
                     potential_targets.append({'enemy': enemy_candidate, 'distance': distance})
 
         if not potential_targets:
-            # No valid targets to attack
             return
 
         potential_targets.sort(key=lambda item: item['distance'])
 
-        # Rotate tower to face the closest target
+        # Rotate to face closest target
         first_target_enemy = potential_targets[0]['enemy']
         direction_vector = pg.math.Vector2(first_target_enemy.pos) - self.pos
         if direction_vector.length_squared() > 0:
             self.angle = direction_vector.angle_to(pg.math.Vector2(1, 0))
 
-        # Firing logic: check reload and magazine
+        # Check reload and magazine
         if self.current_reload > 0 or self.current_magazine_shots <= 0:
             return
 
@@ -146,15 +147,15 @@ class Tower:
     def upgrade(self, range_increase=0, damage_increase=0, reload_time_decrease=0,
                   magazine_size_increase=0, magazine_reload_time_decrease=0,
                   projectile_speed_increase=0):
+        # Upgrade tower and adjust magazine shots
         self.stats.upgrade(range_increase, damage_increase, reload_time_decrease,
                            magazine_size_increase, magazine_reload_time_decrease,
                            projectile_speed_increase=projectile_speed_increase)
-        # Ensure magazine shots do not exceed new magazine size
         if self.current_magazine_shots < self.stats.magazine_size and not self.is_reloading_magazine:
             self.current_magazine_shots = min(self.current_magazine_shots, self.stats.magazine_size)
 
     def draw(self, surface, draw_range=False):
-        # Draw tower shape (polygon or circle)
+        # Draw tower shape
         if self.stats.tower_visual_shape_type == "polygon" and self.stats.tower_visual_points:
             base_points = [pg.math.Vector2(p) for p in self.stats.tower_visual_points]
             scaled_points = [p * self.stats.tower_visual_size for p in base_points]
@@ -168,12 +169,13 @@ class Tower:
         else:
             pg.draw.circle(surface, (255, 0, 0), (int(self.pos.x), int(self.pos.y)), 5)
 
-        # Optionally draw tower range
+        # Optionally draw range
         if draw_range:
             pg.draw.circle(surface, (0, 255, 0), (int(self.pos.x), int(self.pos.y)), self.stats.range, 1)
 
 
 TOWER_PRESETS = {
+    # Tower presets: name -> TowerStats
     "basic":    TowerStats(range=180, damage=10, reload_time=1.0, magazine_size=1, magazine_reload_time=1.0, max_targets=1, explosive=False, damage_type="physical",
                            projectile_shape="circle", projectile_color1=(200, 200, 200), projectile_size=5, projectile_speed=0.5,
                            tower_visual_shape_type="polygon", tower_visual_points=[(1.0, 0.0), (-0.5, 0.7), (-0.5, -0.7)], tower_visual_size=10, tower_visual_color=(180, 180, 180)),
@@ -182,18 +184,33 @@ TOWER_PRESETS = {
                            tower_visual_shape_type="polygon", tower_visual_points=[(1.5, 0.0), (-0.7, 0.3), (-0.7, -0.3)], tower_visual_size=12, tower_visual_color=(100, 100, 200)),
     "rapid":    TowerStats(range=160,  damage=10,  reload_time=0.3, magazine_size=10, magazine_reload_time=4.0, max_targets=1, explosive=False, damage_type="physical",
                            projectile_shape="circle", projectile_color1=(0, 255, 0), projectile_size=6, projectile_speed=0.5,
-                           tower_visual_shape_type="polygon", tower_visual_points=[(0.7, -0.7), (0.7, 0.7), (-0.7, 0.7), (-0.7, -0.7)], tower_visual_size=8, tower_visual_color=(0, 200, 0)),
+                           tower_visual_shape_type="  polygon", tower_visual_points=[(0.7, -0.7), (0.7, 0.7), (-0.7, 0.7), (-0.7, -0.7)], tower_visual_size=8, tower_visual_color=(0, 200, 0)),
     "cannon":   TowerStats(range=160, damage=15, reload_time=1.5, magazine_size=1, magazine_reload_time=1.5, max_targets=1, explosive=True, explosion_radius=60, damage_type="physical",
                            projectile_shape="circle", projectile_color1=(255, 100, 0), projectile_color2=(255,165,0), projectile_size=8, projectile_speed=0.5,
                            tower_visual_shape_type="polygon", tower_visual_points=[(1,0), (0.5,0.866), (-0.5,0.866), (-1,0), (-0.5,-0.866), (0.5,-0.866)], tower_visual_size=10, tower_visual_color=(200, 80, 0)),
     "flame":    TowerStats(range=160, damage=3, reload_time=0.04, magazine_size=120, magazine_reload_time=8.3, max_targets=3, explosive=False, damage_type="magic",
                            projectile_shape="circle", projectile_color1=(255, 0, 0), projectile_color2=(255,200,0), projectile_size=7, projectile_speed=0.8,
                            tower_visual_shape_type="polygon", tower_visual_points=[(0.8, 0.0), (-0.3, 0.9), (0.0, 0.0), (-0.3, -0.9)], tower_visual_size=11, tower_visual_color=(220, 0, 0)),
+    "basic 2": TowerStats(range=200, damage=40, reload_time=1, magazine_size=1, magazine_reload_time=1.0, max_targets=1, explosive=False, damage_type="physical",
+                          projectile_shape="circle", projectile_color1=(255, 255, 100), projectile_size=7, projectile_speed=0.7,
+                          tower_visual_shape_type="polygon", tower_visual_points=[(1.0, 0.0), (-0.5, 0.7), (-0.5, -0.7)], tower_visual_size=12, tower_visual_color=(255, 255, 100)),
+    "cannon 2": TowerStats(range=180, damage=40, reload_time=1.5, magazine_size=1, magazine_reload_time=1.5, max_targets=1, explosive=True, explosion_radius=100, damage_type="physical",
+                           projectile_shape="circle", projectile_color1=(255, 180, 0), projectile_color2=(255,200,0), projectile_size=10, projectile_speed=0.7,
+                           tower_visual_shape_type="polygon", tower_visual_points=[(1,0), (0.5,0.866), (-0.5,0.866), (-1,0), (-0.5,-0.866), (0.5,-0.866)], tower_visual_size=12, tower_visual_color=(255, 180, 0)),
+    "rapid 2": TowerStats(range=180, damage=15, reload_time=0.2, magazine_size=40, magazine_reload_time=12.0, max_targets=1, explosive=False, damage_type="physical",
+                           projectile_shape="circle", projectile_color1=(0, 255, 0), projectile_size=8, projectile_speed=0.6,
+                           tower_visual_shape_type="polygon", tower_visual_points=[(0.7, -0.7), (0.7, 0.7), (-0.7, 0.7), (-0.7, -0.7)], tower_visual_size=10, tower_visual_color=(0, 200, 0)),
+    "sniper 2": TowerStats(range=600, damage=100, reload_time=3.0, magazine_size=1, magazine_reload_time=3.0, max_targets=1, explosive=False, damage_type="physical",
+                           projectile_shape="triangle", projectile_color1=(100, 100, 255), projectile_size=8, projectile_speed=3,
+                           tower_visual_shape_type="polygon", tower_visual_points=[(1.5, 0.0), (-0.7, 0.3), (-0.7, -0.3)], tower_visual_size=14, tower_visual_color=(100, 100, 200)),
+    "flame 2": TowerStats(range=180, damage=4, reload_time=0.03, magazine_size=300, magazine_reload_time=10.0, max_targets=10, explosive=False, damage_type="magic",
+                           projectile_shape="circle", projectile_color1=(255, 0, 0), projectile_color2=(255,200,0), projectile_size=9, projectile_speed=1.0,
+                           tower_visual_shape_type="polygon", tower_visual_points=[(0.8, 0.0), (-0.3, 0.9), (0.0, 0.0), (-0.3, -0.9)], tower_visual_size=13, tower_visual_color=(220, 0, 0))
 }
 
 
 def create_tower(pos: tuple[int, int], preset_name: str) -> Tower:
-    # Create a new Tower instance using a preset
+    # Instantiate a tower from preset
     stats_template = TOWER_PRESETS.get(preset_name, TOWER_PRESETS["basic"])
     stats = TowerStats(
         range=stats_template.range,
@@ -215,4 +232,5 @@ def create_tower(pos: tuple[int, int], preset_name: str) -> Tower:
         tower_visual_size=stats_template.tower_visual_size,
         tower_visual_color=stats_template.tower_visual_color
     )
+    stats.preset_name = preset_name  
     return Tower(pos, stats)

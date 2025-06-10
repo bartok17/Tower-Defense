@@ -21,7 +21,7 @@
   "2": {
     "id": 2,
     "health": 100,
-    "speed": 0.5,
+    "speed": 0.6,
     "armor": 1,
     "damage": 20,
     "magic_resistance": 1,

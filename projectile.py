@@ -14,9 +14,11 @@ class Projectile:
         self.damage_type = damage_type
         self.shape = shape
         self.size = size
+        self.explosion_timer = 0  # Explosion effect timer (seconds)
+        self.explosion_duration = 0.3  # Explosion effect duration (seconds)
 
         if color2:
-            # Pick a random color between color1 and color2
+            # Random color between color1 and color2
             r = random.randint(min(color1[0], color2[0]), max(color1[0], color2[0]))
             g = random.randint(min(color1[1], color2[1]), max(color1[1], color2[1]))
             b = random.randint(min(color1[2], color2[2]), max(color1[2], color2[2]))
@@ -25,12 +27,12 @@ class Projectile:
             self.color = color1
 
     def on_removed(self):
-        # Remove incoming damage from the target if possible
+        # Remove pending damage from target if supported
         if self.target and hasattr(self.target, 'remove_incoming_damage'):
             self.target.remove_incoming_damage(self.damage)
 
     def finish(self, enemies_list=None):
-        # Deal damage to target or area if explosive
+        # Apply damage to target or area (if explosive)
         self.pos = self.target.pos
         if self.explosive and enemies_list is not None:
             for enemy in enemies_list:
@@ -41,9 +43,11 @@ class Projectile:
         else:
             self.target.take_damage(self.damage, damage_type=self.damage_type)
         self.active = False
+        if self.explosive:
+            self.explosion_timer = self.explosion_duration
 
     def update(self, clock_Tick, enemies_list=None):
-        # Move projectile and check for collision with target
+        # Move projectile and check for hit
         if not self.active or self.target.is_dead():
             self.active = False
             return
@@ -56,8 +60,13 @@ class Projectile:
             direction = direction.normalize()
             self.pos += direction * self.speed * clock_Tick
 
+        if not self.active:
+            if self.explosive and self.explosion_timer > 0:
+                self.explosion_timer -= clock_Tick
+            return
+
     def draw(self, surface):
-        # Draw projectile or explosion effect
+        # Draw projectile or explosion
         if self.active:
             if self.shape == "circle":
                 pg.draw.circle(surface, self.color, (int(self.pos.x), int(self.pos.y)), self.size)
@@ -72,5 +81,5 @@ class Projectile:
                     (self.pos.x + half_size, self.pos.y + half_size)
                 ]
                 pg.draw.polygon(surface, self.color, points)
-        elif self.explosive:
+        elif self.explosive and self.explosion_timer > 0:
             pg.draw.circle(surface, (255, 100, 0), (int(self.pos.x), int(self.pos.y)), self.explosion_radius, 2)
