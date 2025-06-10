@@ -36,6 +36,7 @@ def initialize_game():
     return screen, clock
 
 def load_assets(level_config):
+    # Load images and blueprints for the selected level
     os.makedirs(con.ASSETS_DIR, exist_ok=True)
     map_img = pg.image.load(os.path.join(con.ASSETS_DIR, level_config["map_image_path"])).convert_alpha()
     button_img = pg.image.load(os.path.join(con.ASSETS_DIR, "button_template.png")).convert_alpha()
@@ -50,6 +51,7 @@ def load_assets(level_config):
     waypoints_path = os.path.join(con.DATA_DIR, level_config["waypoints_path"])
     waypoints = load_lists_from_json(waypoints_path)
 
+    # Define factory blueprints
     factory_blueprints = [
         BuildingBlueprint("Metal Factory", factory_metal_img, {"gold": 50}, 40, 40,
                           bm.build_factory, resource="metal", payout_per_wave=10),
@@ -57,6 +59,7 @@ def load_assets(level_config):
                           bm.build_factory, resource="wood", payout_per_wave=15),
     ]
 
+    # Define all possible tower blueprints
     all_tower_blueprints_data = [
         {"name": "Tower - basic", "image": tower_basic_img, "cost": {"gold": 50}, "width": 40, "height": 40, "build_function": bm.build_tower, "tower_type": "basic"},
         {"name": "Tower - cannon", "image": tower_cannon_img, "cost": {"gold": 150, "wood": 70, "metal": 20}, "width": 40, "height": 40, "build_function": bm.build_tower, "tower_type": "cannon"},
@@ -65,7 +68,7 @@ def load_assets(level_config):
         {"name": "Tower - sniper", "image": tower_sniper_img, "cost": {"gold": 200, "metal": 15}, "width": 40, "height": 40, "build_function": bm.build_tower, "tower_type": "sniper"},
     ]
 
-    # Upgrade blueprint with fixed cost
+    # Tower upgrade blueprint
     tower_upgrade_blueprint = BuildingBlueprint(
         "Tower Upgrade",
         tower_basic_img,
@@ -75,6 +78,7 @@ def load_assets(level_config):
         tower_type=None
     )
 
+    # Filter available towers for this level
     level_tower_blueprints = []
     available_tower_types = level_config.get("available_towers", [])
 
@@ -85,6 +89,7 @@ def load_assets(level_config):
                                   data["build_function"], tower_type=data["tower_type"])
             )
 
+    # Create UI buttons for factories and towers
     factory_buttons = []
     tower_buttons = []
 
@@ -96,27 +101,31 @@ def load_assets(level_config):
         btn = Button(con.SCREEN_WIDTH - 80, 50 + i * 60, blueprint.image, blueprint.name, width=blueprint.width, height=blueprint.height)
         tower_buttons.append(btn)
 
-    # Add upgrade button
-    upgrade_button = Button(
-        con.SCREEN_WIDTH - 80, 
-        50 + len(tower_buttons) * 60,
-        tower_upgrade_blueprint.image, 
-        tower_upgrade_blueprint.name, 
-        width=tower_upgrade_blueprint.width, 
-        height=tower_upgrade_blueprint.height
-    )
-    tower_buttons.append(upgrade_button)
-    level_tower_blueprints.append(tower_upgrade_blueprint)
+    # Add upgrade button if upgrades are enabled
+    are_upgrades_enabled = level_config.get("are_upgrades_enabled", False)
+    upgrade_button = None
+    if are_upgrades_enabled:
+        upgrade_button = Button(
+            con.SCREEN_WIDTH - 80, 
+            50 + len(tower_buttons) * 60,
+            tower_upgrade_blueprint.image, 
+            tower_upgrade_blueprint.name, 
+            width=tower_upgrade_blueprint.width, 
+            height=tower_upgrade_blueprint.height
+        )
+        tower_buttons.append(upgrade_button)
+        level_tower_blueprints.append(tower_upgrade_blueprint)
 
     return (map_img, button_img, waypoints, factory_buttons, factory_blueprints, 
             tower_buttons, level_tower_blueprints, upgrade_button, tower_upgrade_blueprint)
 
 def draw_waypoints(screen, waypoints):
+    # Draw waypoints/roads for debugging
     for name, road in waypoints.items():
         pg.draw.lines(screen, "red", False, road, 2)
 
 def update_enemies(clock_tick, enemies_list, base, resources_manager):
-    # Update enemies, handle removal and rewards
+    # Update enemy positions, handle deaths and reaching base
     for e in enemies_list:
         e.all_enemies = enemies_list
         e.enemies_ref = enemies_list
@@ -132,7 +141,7 @@ def update_enemies(clock_tick, enemies_list, base, resources_manager):
             resources_manager.add_resource("gold", enemy.gold_reward)
 
 def update_towers(clock_tick, towers, enemies_list, waypoints, projectiles):
-    # Update towers and trigger attacks
+    # Update towers, handle reloading and attacks
     delta_time_seconds = clock_tick / 1000.0
     for tower in towers:
         if tower.current_reload > 0:
@@ -153,7 +162,7 @@ def update_towers(clock_tick, towers, enemies_list, waypoints, projectiles):
         tower.attack(enemies_list, waypoints, projectiles)
 
 def update_projectiles(clock_tick: int, projectiles: List[Projectile], enemies_list: list):
-    # Update and remove inactive projectiles
+    # Update projectiles and remove inactive ones
     for projectile in projectiles[:]:
         projectile.update(clock_tick, enemies_list)
         if not projectile.active:
@@ -162,6 +171,7 @@ def update_projectiles(clock_tick: int, projectiles: List[Projectile], enemies_l
             projectiles.remove(projectile)
 
 def run_main_menu(screen, clock):
+    # Main menu loop
     title_font = pg.font.Font(None, 74)
     button_font = pg.font.Font(None, 50)
     title_text = title_font.render("Tower Defense Game", True, (200, 200, 200))
@@ -205,6 +215,7 @@ def run_main_menu(screen, clock):
     return next_state
 
 def run_level_select(screen, clock, levels_config):
+    # Level selection menu loop
     title_font = pg.font.Font(None, 60)
     level_button_height = 50
     level_button_spacing = 20
@@ -266,6 +277,7 @@ def run_level_select(screen, clock, levels_config):
     return next_state, selected_level_config
 
 def run_game_loop(screen, clock, selected_level_config, levels_config_list): 
+    # Main gameplay loop for a level
     (map_img, button_img, waypoints,
  factory_buttons, factory_blueprints,
  tower_buttons, tower_blueprints, 
@@ -312,7 +324,7 @@ def run_game_loop(screen, clock, selected_level_config, levels_config_list):
     wave_preparation_timer = 0
     time_since_last_spawn_in_wave = 0
 
-    # Enemy spawn state
+    # Enemy spawn state variables
     current_group_idx_in_wave = 0
     spawn_idx_within_group = 0
     inter_group_delay_timer = 0.0
@@ -332,7 +344,7 @@ def run_game_loop(screen, clock, selected_level_config, levels_config_list):
     show_tower_ranges = False
     fps_font = pg.font.Font(None, 30)
 
-    # Pause menu UI
+    # Pause menu UI setup
     pause_font = pg.font.Font(None, 50)
     pause_text_surface = pause_font.render("Paused", True, (200, 200, 200))
     pause_text_rect = pause_text_surface.get_rect(center=(con.SCREEN_WIDTH // 2, con.SCREEN_HEIGHT // 2 - 100))
@@ -358,7 +370,7 @@ def run_game_loop(screen, clock, selected_level_config, levels_config_list):
 
     game_speed = 1.0
 
-    # Speed control UI
+    # Speed control UI setup
     speed_button_margin = 20
     speed_button_width = 50
     speed_button_height = 40
@@ -388,7 +400,7 @@ def run_game_loop(screen, clock, selected_level_config, levels_config_list):
                 game_state_internal = "quit_to_menu" 
                
             if event.type == pg.MOUSEBUTTONDOWN and event.button == 1:
-                # Speed control
+                # Handle speed controls
                 if slow_button.is_clicked(mouse_pos):
                     game_speed = max(0.25, game_speed / 2)
                     continue
@@ -447,7 +459,7 @@ def run_game_loop(screen, clock, selected_level_config, levels_config_list):
                                 break
                 if selected_blueprint and not clicked_on_ui_button_this_frame:
                     adjusted_pos = (mouse_pos[0] - selected_blueprint.width // 2, mouse_pos[1] - selected_blueprint.height // 2 )
-                    # Upgrade blueprint
+                    # Handle building or upgrading
                     if selected_blueprint.name == "Tower Upgrade":
                         if bm.upgrade_tower(mouse_pos, selected_blueprint, resources_manager):
                             selected_blueprint = None
@@ -483,7 +495,7 @@ def run_game_loop(screen, clock, selected_level_config, levels_config_list):
             elif current_game_mode == GameState.WAVE_ACTIVE:
                 wave_preparation_timer -= clock_tick
                 if wave_preparation_timer <= 0 and current_wave_data:
-                    # Enemy spawn logic
+                    # Handle enemy spawning for current wave
                     if inter_group_delay_timer > 0:
                         inter_group_delay_timer -= clock_tick
                         if inter_group_delay_timer < 0:
@@ -508,7 +520,7 @@ def run_game_loop(screen, clock, selected_level_config, levels_config_list):
                                 spawn_idx_within_group = 0
                                 inter_group_delay_timer = delay_after_this_group_seconds * 1000.0
                         elif len(enemies_list) == 0:
-                            # Wave cleared
+                            # Wave cleared, give rewards
                             resources_manager.add_resource("gold", current_wave_data.get("passive_gold", 0))
                             resources_manager.add_resource("wood", current_wave_data.get("passive_wood", 0))
                             resources_manager.add_resource("metal", current_wave_data.get("passive_metal", 0))
@@ -580,6 +592,7 @@ def run_game_loop(screen, clock, selected_level_config, levels_config_list):
         return GameState.MAIN_MENU, level_was_won, None
 
     if game_state_internal == "game_over" or game_state_internal == "victory":
+        # Handle end screen and next level logic
         next_level_exists_in_config = False
         current_level_idx = -1
         next_level_config_for_button = None
@@ -616,7 +629,7 @@ def run_game_loop(screen, clock, selected_level_config, levels_config_list):
     return GameState.LEVEL_SELECT, level_was_won, None
 
 def load_levels_config(file_path, default_config):
-    # Load or create levels config
+    # Load levels config from file or create it if missing/corrupt
     try:
         with open(file_path, 'r') as f:
             return json.load(f)
@@ -638,6 +651,7 @@ def save_levels_config(file_path, config_data):
         print(f"Error: Could not save levels configuration to '{file_path}'.")
 
 if __name__ == "__main__":
+    # Main application loop
     screen, clock = initialize_game()
     os.makedirs(con.DATA_DIR, exist_ok=True)
     levels_config_filepath = os.path.join(con.DATA_DIR, LEVELS_CONFIG_FILENAME)

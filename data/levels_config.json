@@ -59,7 +59,7 @@
     {
         "id": "level4",
         "name": "hexagon valley test",
-        "map_image_path": "map3.png",
+        "map_image_path": "map4.png",
         "waypoints_path": "map4_waypoints.json",
         "waves_path": "waves_level4.json",
         "thumbnail_path": "level4_thumb.png",
@@ -68,6 +68,7 @@
         "start_wood": 10000,
         "start_metal": 50000,
         "are_abilities_enabled": false,
+        "are_upgrades_enabled": true,
         "available_towers": [
             "basic",
             "rapid",
