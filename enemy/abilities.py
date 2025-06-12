@@ -17,6 +17,7 @@ class Abilities:
             "summoner2": aea.SummonerAbility(4, "8"),
             "healer": aea.HealerAbility(5),
             "invisible": aea.invisibleAbility(),
+            "boss": aea.BossAbility()
         }
         if ability_name in abilities_dict:
             self.abilities.append(abilities_dict[ability_name])  

@@ -140,7 +140,6 @@
     "radius": 7,
     "abilities": [
       "summoner2"
-
     ],
     "gold_reward": 60,
     "shape": "circle"
@@ -162,7 +161,6 @@
     "radius": 7,
     "abilities": [
       "summoner2"
-
     ],
     "gold_reward": 0,
     "shape": "circle"
@@ -183,10 +181,29 @@
     ],
     "radius": 12,
     "abilities": [
-    
-
     ],
     "gold_reward": 210,
     "shape": "hexagon"
+  },
+  "10": {
+    "id": 10,
+    "health": 500,
+    "speed": 0.8,
+    "armor": 0,
+    "damage": 100,
+    "magic_resistance": 0,
+    "attack_range": 100,
+    "attack_speed": 1.0,
+    "color": [
+      255,
+      0,
+      0
+    ],
+    "radius": 20,
+    "abilities": [
+      "boss"
+    ],
+    "gold_reward": 100,
+    "shape": "glitch_hex"
   }
 }

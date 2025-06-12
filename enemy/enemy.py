@@ -3,7 +3,7 @@ import pygame as pg
 import math 
 import enemy.abstractEnemyAbilities as aea 
 from enemy.abilities import Abilities
-
+import constants as con
 _enemy_font = None
 
 class Enemy:
@@ -71,6 +71,16 @@ class Enemy:
                 y = self.radius + self.radius * math.sin(angle_rad)
                 points.append((x, y))
             pg.draw.polygon(self._pre_rendered_shape, (r, g, b, draw_alpha), points)
+        elif self.shape == "glitch_hex":
+            glitch_values = [-2, 1.5, -1, 2.5, -0.5, 0.8]
+            points = []
+            for i in range(6):
+                angle_rad = i * math.pi / 3
+                glitch = glitch_values[i % len(glitch_values)]
+                x = self.radius + (self.radius + glitch) * math.cos(angle_rad)
+                y = self.radius + (self.radius + glitch) * math.sin(angle_rad)
+                points.append((x, y))
+            pg.draw.polygon(self._pre_rendered_shape, (r, g, b, draw_alpha), points, width=2)
 
     def update(self, clock_tick=0): 
         # Move towards the next waypoint if not at the end.
@@ -111,6 +121,17 @@ class Enemy:
             surface = _enemy_font.render(ft["text"], True, ft["color"])
             surface.set_alpha(alpha)
             map_surface.blit(surface, (ft["pos"].x, ft["pos"].y - 20))
+        if self.has_ability(aea.BossAbility):
+            bar_width = 600
+            bar_height = 25
+            bar_x = (con.SCREEN_WIDTH - bar_width) // 2
+            bar_y = 20
+            pg.draw.rect(map_surface, (100, 0, 0), (bar_x, bar_y, bar_width, bar_height))
+            hp_perc = self.health / self.max_health
+            pg.draw.rect(map_surface, (255, 0, 255), (bar_x, bar_y, bar_width * hp_perc, bar_height))
+            boss_font = pg.font.Font(None, 32)
+            text_surface = boss_font.render("BOSS - 404", True, (255, 255, 255))
+            map_surface.blit(text_surface, (bar_x + 10, bar_y - 28))
 
     def take_damage(self, value, damage_type="physical"):
         # Apply damage after reductions from armor or magic resistance.

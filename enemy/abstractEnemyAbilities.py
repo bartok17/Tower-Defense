@@ -145,3 +145,88 @@ class invisibleAbility(EnemyAbility):
         self.name = "invisible"
     def apply(self, enemy):
         enemy.is_invisible = True
+
+class BossAbility(EnemyAbility):
+    def __init__(self):
+        self.name = "boss"
+        self.stage = 1
+        self.phase_timer = 0
+        self.phase_cooldown = 5.0
+        self.glitch_spawn_timer = 0
+        self.active_glitches = []
+        
+    def apply(self, enemy):
+        enemy.abilities.add_ability("invisible")
+        enemy.is_invisible = True
+
+    def on_update(self, enemy, clock_tick):
+        clock_tick = clock_tick / 1000.0
+        if enemy.health < (enemy.max_health * 0.8): 
+            enemy.abilities.remove_ability("invisible")
+            enemy.is_invisible = False
+            self.stage = 2
+        if self.stage == 2:
+            clock_tick = clock_tick 
+            self.phase(enemy, clock_tick)
+            self.glitch_spawn_timer += clock_tick
+            if self.glitch_spawn_timer >= 0.15:  
+                self.glitch_spawn_timer = 0
+                self.glitch()
+        for glitch in self.active_glitches[:]:
+            glitch["time"] -= clock_tick
+            if glitch["time"] <= 0:
+                self.active_glitches.remove(glitch)
+    def phase(self, enemy, clock_tick):
+        
+        self.phase_timer += clock_tick
+        if self.phase_timer >= self.phase_cooldown:
+            self.phase_timer = 0
+            self.phase_cooldown = random.randint(7, 9)
+            if enemy.curr_waypoint > 0:
+                enemy.curr_waypoint -= 1
+                enemy.pos = pg.Vector2(enemy.waypoints[enemy.curr_waypoint])
+                self.summon_nearby(enemy, count=7)
+
+    def glitch(self):
+        for i in range(5): 
+            glitch = {
+                "pos": pg.Vector2(random.randint(0, root_project_constants.SCREEN_WIDTH), random.randint(0, root_project_constants.SCREEN_HEIGHT)),
+                "size": random.randint(10, 40),
+                "color": random.choice([(255, 0, 255), (0, 255, 255), (150, 0, 255)]),
+                "time": 0.3  
+            }
+            self.active_glitches.append(glitch)
+
+    def summon_nearby(self, enemy, count=7, radius=40):
+        from enemy.enemy import Enemy
+        import os, json
+        import constants as con
+        template_path = os.path.join(con.DATA_DIR, "enemyTemplates.json")
+        with open(template_path, "r") as f:
+            templates = json.load(f)
+        template = templates.get("1") 
+        for _ in range(count):
+            start = pg.Vector2(enemy.pos)
+            loop = [
+                start,
+                start + pg.Vector2(radius, 0).rotate(random.uniform(0, 360)),
+                start + pg.Vector2(radius, 0).rotate(random.uniform(0, 360)),
+                start + pg.Vector2(radius, 0).rotate(random.uniform(0, 360)),
+                start
+            ]
+            if enemy.curr_waypoint + 1 < len(enemy.waypoints):
+                resume_path = enemy.waypoints[enemy.curr_waypoint + 1:]
+            else:
+                resume_path = []
+
+            path = loop + [pg.Vector2(p) for p in resume_path]
+            new_enemy = Enemy(path, template)
+            new_enemy.all_enemies = enemy.all_enemies
+            enemy.all_enemies.append(new_enemy)
+
+            enemy.special_texts.append({
+                "text": "PHASE SUMMON",
+                "pos": enemy.pos.copy(),
+                "lifetime": 1.0,
+                "color": (200, 100, 255)
+            })
