@@ -556,10 +556,9 @@ def run_game_loop(screen, clock, selected_level_config, levels_config_list):
             tower_instance.draw(screen, show_tower_ranges)
         for enemy_instance in enemies_list:
             enemy_instance.draw(screen)
-            for i in enemy_instance.abilities.abilities:
-                import enemy.abstractEnemyAbilities as aea
-                if isinstance(i, aea.BossAbility):
-                    for glitch in i.active_glitches:
+            boss_ability = enemy_instance.get_ability("boss")
+            if boss_ability:
+                    for glitch in boss_ability.active_glitches:
                         size = glitch["size"]
                         alpha = int(255 * (glitch["time"] / 0.3))
                         surf = pg.Surface((size, size), pg.SRCALPHA)

@@ -72,15 +72,11 @@ class Enemy:
                 points.append((x, y))
             pg.draw.polygon(self._pre_rendered_shape, (r, g, b, draw_alpha), points)
         elif self.shape == "glitch_hex":
-            glitch_values = [-2, 1.5, -1, 2.5, -0.5, 0.8]
-            points = []
-            for i in range(6):
-                angle_rad = i * math.pi / 3
-                glitch = glitch_values[i % len(glitch_values)]
-                x = self.radius + (self.radius + glitch) * math.cos(angle_rad)
-                y = self.radius + (self.radius + glitch) * math.sin(angle_rad)
-                points.append((x, y))
+            center = pg.Vector2(self.radius, self.radius)
+            direction = pg.Vector2(self.radius, 0)
+            points = [center + direction.rotate(i * 60) for i in range(6)]
             pg.draw.polygon(self._pre_rendered_shape, (r, g, b, draw_alpha), points, width=2)
+
 
     def update(self, clock_tick=0): 
         # Move towards the next waypoint if not at the end.
@@ -125,13 +121,17 @@ class Enemy:
             bar_width = 600
             bar_height = 25
             bar_x = (con.SCREEN_WIDTH - bar_width) // 2
-            bar_y = 20
-            pg.draw.rect(map_surface, (100, 0, 0), (bar_x, bar_y, bar_width, bar_height))
+            bar_y = 150
+            hpbar_surface = pg.Surface((bar_width, bar_height), pg.SRCALPHA)
+            hpbar_surface.fill((100, 0, 0, 70))
             hp_perc = self.health / self.max_health
-            pg.draw.rect(map_surface, (255, 0, 255), (bar_x, bar_y, bar_width * hp_perc, bar_height))
-            boss_font = pg.font.Font(None, 32)
-            text_surface = boss_font.render("BOSS - 404", True, (255, 255, 255))
-            map_surface.blit(text_surface, (bar_x + 10, bar_y - 28))
+            hp_rect = pg.Rect(0, 0, int(bar_width * hp_perc), bar_height)
+            pg.draw.rect(hpbar_surface, (255, 0, 255, 70), hp_rect)
+            map_surface.blit(hpbar_surface, (bar_x, bar_y))
+            boss_font = pg.font.Font(None, 24)
+            text_surface = boss_font.render("BOSS - 404", True, (0, 0, 0))
+            text_surface.set_alpha(200)
+            map_surface.blit(text_surface, (bar_x, bar_y+3)) 
 
     def take_damage(self, value, damage_type="physical"):
         # Apply damage after reductions from armor or magic resistance.
@@ -177,3 +177,8 @@ class Enemy:
     def has_ability(self, ability_type):
         # Check if the enemy has a specific ability.
         return any(isinstance(a, ability_type) for a in self.abilities.abilities)
+    def get_ability(self, ability_key):
+        for ability in self.abilities.abilities:
+            if ability==self.abilities.abilities_dict[ability_key]: return ability
+        return None
+

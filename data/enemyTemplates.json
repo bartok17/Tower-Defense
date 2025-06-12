@@ -125,7 +125,7 @@
   },
   "7": {
     "id": 7,
-    "health": 500,
+    "health": 1500,
     "speed": 0.8,
     "armor": 0,
     "damage": 100,
