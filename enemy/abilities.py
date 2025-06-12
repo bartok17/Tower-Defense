@@ -10,6 +10,7 @@ class Abilities:
             "fast": aea.FastAbility(),
             "tank": aea.TankAbility(),
             "summoner1": aea.SummonerAbility(4, "6"),
+            "summoner2": aea.SummonerAbility(4, "8"),
             "healer": aea.HealerAbility(5),
             "invisible": aea.invisibleAbility(),
             "boss": aea.BossAbility()
