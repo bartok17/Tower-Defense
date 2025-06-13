@@ -4,11 +4,7 @@ import enemy.abstractEnemyAbilities as aea
 
 class Abilities:
     def __init__(self):
-        self.abilities = []
-
-
-    def add_ability(self, ability_name):
-        abilities_dict = {
+        self.abilities_dict = {
             "magic_resistant": aea.MagicResistantAbility(),
             "ranged": aea.RangedAbility(),
             "fast": aea.FastAbility(),
@@ -21,8 +17,13 @@ class Abilities:
             "dash": aea.DashAbility(3.0, 1.5, 4.0),
             "boss": aea.BossAbility()
         }
-        if ability_name in abilities_dict:
-            self.abilities.append(abilities_dict[ability_name])  
+        self.abilities = []
+
+
+    def add_ability(self, ability_name):
+
+        if ability_name in self.abilities_dict:
+            self.abilities.append(self.abilities_dict[ability_name])  
 
     def apply_all(self, enemy):
         for ability in enemy.abilities.abilities:

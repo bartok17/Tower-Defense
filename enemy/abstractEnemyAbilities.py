@@ -158,14 +158,15 @@ class BossAbility(EnemyAbility):
     def apply(self, enemy):
         enemy.abilities.add_ability("invisible")
         enemy.is_invisible = True
-
     def on_update(self, enemy, clock_tick):
         clock_tick = clock_tick / 1000.0
         if enemy.health < (enemy.max_health * 0.8): 
             enemy.abilities.remove_ability("invisible")
             enemy.is_invisible = False
             self.stage = 2
-        if self.stage == 2:
+        if enemy.health < (enemy.max_health * 0.6):
+            self.stage = 20
+        if self.stage>1:
             clock_tick = clock_tick 
             self.phase(enemy, clock_tick)
             self.glitch_spawn_timer += clock_tick
@@ -181,14 +182,14 @@ class BossAbility(EnemyAbility):
         self.phase_timer += clock_tick
         if self.phase_timer >= self.phase_cooldown:
             self.phase_timer = 0
-            self.phase_cooldown = random.randint(7, 9)
+            self.phase_cooldown = random.randint(1, 3)
             if enemy.curr_waypoint > 0:
                 enemy.curr_waypoint -= 1
                 enemy.pos = pg.Vector2(enemy.waypoints[enemy.curr_waypoint])
                 self.summon_nearby(enemy, count=7)
 
     def glitch(self):
-        for i in range(5): 
+        for i in range(self.stage * 3): 
             glitch = {
                 "pos": pg.Vector2(random.randint(0, root_project_constants.SCREEN_WIDTH), random.randint(0, root_project_constants.SCREEN_HEIGHT)),
                 "size": random.randint(10, 40),
