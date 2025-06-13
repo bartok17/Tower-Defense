@@ -64,9 +64,9 @@
         "waves_path": "waves_level4.json",
         "thumbnail_path": "level4_thumb.png",
         "unlocked": true,
-        "start_gold": 3000000,
-        "start_wood": 10000,
-        "start_metal": 50000,
+        "start_gold": 400,
+        "start_wood": 100,
+        "start_metal": 50,
         "are_abilities_enabled": false,
         "are_upgrades_enabled": true,
         "available_towers": [

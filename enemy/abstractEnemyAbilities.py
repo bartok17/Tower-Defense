@@ -230,3 +230,42 @@ class BossAbility(EnemyAbility):
                 "lifetime": 1.0,
                 "color": (200, 100, 255)
             })
+
+class DashAbility(EnemyAbility):
+    def __init__(self, speed_multiplier=2.0, dash_duration=1.0, cooldown=5.0):
+        self.speed_multiplier = speed_multiplier
+        self.dash_duration = dash_duration
+        self.cooldown = cooldown
+        self.timer = 0.0
+        self.dashing = False
+        self.dash_timer = 0.0
+
+    def apply(self, enemy):
+        self.original_speed = getattr(enemy, "speed", 1.0)
+
+    def on_update(self, enemy, clock_tick):
+        if getattr(enemy, "disabled_abilities", {}).get("active", False):
+            return
+
+        dt = clock_tick / 1000.0
+        self.timer += dt
+
+        if self.dashing:
+            self.dash_timer += dt
+            if self.dash_timer >= self.dash_duration:
+                enemy.speed = self.original_speed
+                self.dashing = False
+                self.dash_timer = 0.0
+        elif self.timer >= self.cooldown:
+            self.original_speed = getattr(enemy, "speed", 1.0)
+            enemy.speed = self.original_speed * self.speed_multiplier
+            self.dashing = True
+            self.dash_timer = 0.0
+            self.timer = 0.0
+            if hasattr(enemy, "special_texts"):
+                enemy.special_texts.append({
+                    "text": "DASH!",
+                    "pos": enemy.pos.copy(),
+                    "lifetime": 0.7,
+                    "color": (255, 200, 50)
+                })

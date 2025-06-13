@@ -14,9 +14,11 @@ class Abilities:
             "fast": aea.FastAbility(),
             "tank": aea.TankAbility(),
             "summoner1": aea.SummonerAbility(4, "6"),
-            "summoner2": aea.SummonerAbility(4, "8"),
+            "summoner2": aea.SummonerAbility(1, "8", cooldown=6.0),
             "healer": aea.HealerAbility(5),
             "invisible": aea.invisibleAbility(),
+            "inispeed": aea.DashAbility(4.0, 20.0, 300.0),
+            "dash": aea.DashAbility(3.0, 1.5, 4.0),
             "boss": aea.BossAbility()
         }
         if ability_name in abilities_dict:

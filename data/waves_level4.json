@@ -12,6 +12,12 @@
           8,
           1.0,
           500
+        ],
+        [
+          1,
+          10,
+          1.0,
+          1000
         ]
       ],
       "mode": 1
@@ -21,12 +27,12 @@
       "P_time": 2,
       "inter_wave_delay": 5,
       "passive_gold": 90,
-      "passive_wood": 25,
-      "passive_metal": 25,
+      "passive_wood": 60,
+      "passive_metal": 60,
       "units": [
         [
           4,
-          10,
+          12,
           1.0,
           1000
         ]
@@ -39,14 +45,14 @@
       "P_time": 2,
       "inter_wave_delay": 5,
       "passive_gold": 50,
-      "passive_wood": 25,
-      "passive_metal": 25,
+      "passive_wood": 40,
+      "passive_metal": 40,
       "units": [
         [
-          5,
-          5,
+          7,
+          25,
           1.0,
-          1000
+          100
         ]
       ],
       "mode": 1
@@ -56,14 +62,14 @@
       "P_time": 2,
       "inter_wave_delay": 5,
       "passive_gold": 0,
-      "passive_wood": 25,
-      "passive_metal": 25,
+      "passive_wood": 40,
+      "passive_metal": 40,
       "units": [
         [
-          5,
-          5,
+          9,
+          4,
           1.0,
-          1000
+          6000
         ],
         [
           1,
