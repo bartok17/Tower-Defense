@@ -125,6 +125,7 @@ class IconHUD:
                     btn.hover_progress = 0.0
                     btn.hover_speed = 0.08
                 if is_hovered:
+                    btn.hover_progress = min(1.0, btn.hover_progress + btn.hover_speed)
                     label_text = self.font.render(btn.label, True, (255, 255, 255))
                     label_rect = label_text.get_rect(center=(btn.rect.centerx, btn.rect.bottom + 12))
                     screen.blit(label_text, label_rect)
