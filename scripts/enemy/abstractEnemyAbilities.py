@@ -98,7 +98,7 @@ class SummonerAbility(EnemyAbility):
     def on_update(self, enemy, clock_tick):
         if getattr(enemy, "disabled_abilities", {}).get("active", False):
             return  
-        from enemy.enemy import Enemy
+        from scripts.enemy.enemy import Enemy
         self.timer += clock_tick / 1000.0
         if self.timer < self.cooldown:
             return
@@ -199,7 +199,7 @@ class BossAbility(EnemyAbility):
             self.active_glitches.append(glitch)
 
     def summon_nearby(self, enemy, count=7, radius=40):
-        from enemy.enemy import Enemy
+        from scripts.enemy.enemy import Enemy
         import os, json
         template_path = os.path.join(con.DATA_DIR, "enemyTemplates.json")
         with open(template_path, "r") as f:

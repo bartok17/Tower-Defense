@@ -58,7 +58,7 @@
     },
     {
         "id": "level4",
-        "name": "hexagon valley test",
+        "name": "crossroads",
         "map_image_path": "map4.png",
         "waypoints_path": "map4_waypoints.json",
         "waves_path": "waves_level4.json",

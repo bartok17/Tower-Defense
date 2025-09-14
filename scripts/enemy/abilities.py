@@ -1,6 +1,6 @@
 import time
-import pygame as pg
-import enemy.abstractEnemyAbilities as aea
+from scripts import enemy as aea
+
 
 class Abilities:
     def __init__(self):

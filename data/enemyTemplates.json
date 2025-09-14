@@ -127,9 +127,9 @@
     "id": 7,
     "health": 30,
     "speed": 1,
-    "armor": 4,
+    "armor": 10,
     "damage": 3,
-    "magic_resistance": 2,
+    "magic_resistance": 1,
     "attack_range": 50,
     "attack_speed": 1.0,
     "color": [
@@ -141,7 +141,7 @@
     "abilities": [
       "summoner2"
     ],
-    "gold_reward": 40,
+    "gold_reward": 20,
     "shape": "circle"
   },
   "8": {

@@ -1,8 +1,7 @@
 import pygame as pg
-import math 
-import enemy.abstractEnemyAbilities as aea 
-from enemy.abilities import Abilities
-from scripts import constants as con
+import math
+from scripts.enemy.abilities import Abilities
+from scripts import constants as con, enemy as aea
 
 _enemy_font = None
 

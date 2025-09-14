@@ -1,5 +1,5 @@
 import pygame as pg
-from economy.resourcesFactory import Factory
+from scripts.economy.resourcesFactory import Factory
 from Tower import create_tower
 
 factories = []

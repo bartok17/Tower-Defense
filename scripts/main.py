@@ -7,12 +7,12 @@ from dummyEntity import dummyEntity
 from economy import ResourcesManager
 from building import BuildingBlueprint
 from typing import List
-from projectile import Projectile
+from scripts.projectile import Projectile
 import building.buildManager as bm
 from endingScreen import EndingScreen
 from userInterface import UserInterface
 # from pauseScreen import PauseScreen 
-from playerAbilities import PlayerAbilities
+from scripts.playerAbilities import PlayerAbilities
 import os
 import json
 

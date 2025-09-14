@@ -13,8 +13,8 @@ WHITE = (255, 255, 255)
 RED = (255, 0, 0)
 
 
-DATA_DIR = "data"
-ASSETS_DIR = "assets"
+DATA_DIR = "../data"
+ASSETS_DIR = "../assets"
 ICON_PATHS = {
     "health": "assets/heart.png",
     "wave": "assets/skull.png",

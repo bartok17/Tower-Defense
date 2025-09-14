@@ -1,5 +1,6 @@
 import pygame as pg
-import building.buildManager as bm
+from scripts import building as bm
+
 
 class BuildingBlueprint:
     def __init__(self, name, image, cost, width, height, build_function, resource=None, tower_type=None, payout_per_wave=None):
