@@ -2,7 +2,7 @@ import json
 from math import inf
 import random
 import os
-import constants as root_project_constants 
+from scripts import constants as root_project_constants, constants as con
 import pygame as pg
 
 _loaded_enemy_templates = None
@@ -201,7 +201,6 @@ class BossAbility(EnemyAbility):
     def summon_nearby(self, enemy, count=7, radius=40):
         from enemy.enemy import Enemy
         import os, json
-        import constants as con
         template_path = os.path.join(con.DATA_DIR, "enemyTemplates.json")
         with open(template_path, "r") as f:
             templates = json.load(f)

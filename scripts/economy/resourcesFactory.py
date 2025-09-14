@@ -1,6 +1,5 @@
 import pygame as pg
-import os
-import constants as con
+
 
 class Factory:
     def __init__(self, position, resource_type, production_rate_per_wave, image_path=None):

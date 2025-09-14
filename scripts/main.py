@@ -1,9 +1,8 @@
 import pygame as pg
 import constants as con
 from waypointsCreator import load_lists_from_json
-import waveLoader as wl
+from scripts import waveLoader as wl
 from Button import Button
-from Tower import Tower, create_tower
 from dummyEntity import dummyEntity
 from economy import ResourcesManager
 from building import BuildingBlueprint
@@ -16,7 +15,7 @@ from userInterface import UserInterface
 from playerAbilities import PlayerAbilities
 import os
 import json
-import random
+
 LEVELS_CONFIG_FILENAME = "levels_config.json"
 
 class GameState:

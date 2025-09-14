@@ -1,9 +1,9 @@
-import time
 import pygame as pg
 import math 
 import enemy.abstractEnemyAbilities as aea 
 from enemy.abilities import Abilities
-import constants as con
+from scripts import constants as con
+
 _enemy_font = None
 
 class Enemy:
