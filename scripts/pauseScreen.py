@@ -1,10 +1,8 @@
 import pygame as pg
-try:
-    from .Button import Button
-    from . import constants as con
-except ImportError:
-    from Button import Button
-    import constants as con
+
+from .Button import Button
+from . import constants as con
+
 
 class PauseScreen:
     def __init__(self, screen):

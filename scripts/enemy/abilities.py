@@ -1,5 +1,5 @@
 import time
-from scripts import enemy as aea
+from scripts.enemy import abstractEnemyAbilities as aea  # Fixed import
 
 
 class Abilities:

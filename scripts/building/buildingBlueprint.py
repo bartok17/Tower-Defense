@@ -1,5 +1,5 @@
 import pygame as pg
-from scripts import building as bm
+from . import buildManager as bm
 
 
 class BuildingBlueprint:
