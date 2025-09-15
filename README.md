@@ -4,13 +4,13 @@ This project is a Pygame-based tower defense game. To play, run the main script 
 
 Links to key files:
 - Main entry point: [main.py](main.py)
-- Constants (resolution, asset paths): [scripts/constants.py](scripts/constants.py)
-- Wave editor (optional tool): [scripts/waveCreator.py](scripts/waveCreator.py)
-- Enemy template editor (optional tool): [scripts/enemyTemplateCreator.py](scripts/enemyTemplateCreator.py)
+- Constants: [scripts/constants.py](scripts/constants.py)
+- Wave editor: [scripts/waveCreator.py](scripts/waveCreator.py)
+- Enemy template editor: [scripts/enemyTemplateCreator.py](scripts/enemyTemplateCreator.py)
 
 ## 1) Requirements
-- Python 3.12 (recommended)
-- pip (Python package manager)
+- Python 3.12 
+- pip
 
 ## 2) Launch the game
 Run from the repository root:
