@@ -1,6 +1,11 @@
 import pygame as pg
-import constants as con
-from Button import Button
+# Replace local imports with package-relative; keep fallback for direct runs
+try:
+    from . import constants as con
+    from .Button import Button
+except ImportError:
+    import constants as con
+    from Button import Button
 class UserInterface:
     def __init__(self, font=None):
         self.font = pg.font.Font(font, 36)

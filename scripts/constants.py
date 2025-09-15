@@ -1,3 +1,5 @@
+import os
+
 SCREEN_WIDTH = 1000
 SCREEN_HEIGHT = 1000
 
@@ -13,8 +15,10 @@ WHITE = (255, 255, 255)
 RED = (255, 0, 0)
 
 
-DATA_DIR = "../data"
-ASSETS_DIR = "../assets"
+# Replace the relative folders with absolute paths based on this file location
+_PROJECT_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+DATA_DIR = os.path.join(_PROJECT_ROOT, "data")
+ASSETS_DIR = os.path.join(_PROJECT_ROOT, "assets")
 ICON_PATHS = {
     "health": "assets/heart.png",
     "wave": "assets/skull.png",

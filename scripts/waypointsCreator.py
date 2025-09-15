@@ -1,6 +1,6 @@
 import json
 import pygame as pg
-import constants as con
+from . import constants as con
 import os
 
 # Ensure data directory exists

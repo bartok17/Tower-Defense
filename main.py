@@ -1,16 +1,16 @@
 import pygame as pg
-import constants as con
-from waypointsCreator import load_lists_from_json
+from scripts import constants as con
+from scripts.waypointsCreator import load_lists_from_json
 from scripts import waveLoader as wl
-from Button import Button
-from dummyEntity import dummyEntity
-from economy import ResourcesManager
-from building import BuildingBlueprint
+from scripts.Button import Button
+from scripts.dummyEntity import dummyEntity
+from scripts.economy.resourcesManager import ResourcesManager
+from scripts.building import BuildingBlueprint
 from typing import List
 from scripts.projectile import Projectile
-import building.buildManager as bm
-from endingScreen import EndingScreen
-from userInterface import UserInterface
+import scripts.building.buildManager as bm
+from scripts.endingScreen import EndingScreen
+from scripts.userInterface import UserInterface
 # from pauseScreen import PauseScreen 
 from scripts.playerAbilities import PlayerAbilities
 import os

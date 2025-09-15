@@ -1,6 +1,11 @@
 import pygame as pg
-import constants as con
-from Button import Button
+# Use package-relative imports, with a fallback for direct execution
+try:
+    from . import constants as con
+    from .Button import Button
+except ImportError:
+    import constants as con
+    from Button import Button
 
 class EndingScreen:
     def __init__(self, screen, game_won=False, next_level_available=False):

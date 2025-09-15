@@ -1,13 +1,15 @@
 # Tower.py
 
-from Button import Button
-from enemy.enemy import Enemy
-from dummyEntity import dummyEntity
+from .Button import Button
+from .enemy.enemy import Enemy
+from .dummyEntity import dummyEntity
 from random import randint, choice
-from projectile import Projectile
-import constants as con
+from .projectile import Projectile
+from . import constants as con
 import pygame as pg
-import enemy.abstractEnemyAbilities as aea
+from .enemy import abstractEnemyAbilities as aea
+import json
+import os
 
 class TowerStats:
     def __init__(self, range: int, damage: int, reload_time: float,
@@ -173,40 +175,89 @@ class Tower:
         if draw_range:
             pg.draw.circle(surface, (0, 255, 0), (int(self.pos.x), int(self.pos.y)), self.stats.range, 1)
 
+def _default_tower_presets():
+    # Minimal fallback if JSON fails to load
+    return {
+        "basic": TowerStats(
+            range=180,
+            damage=10,
+            reload_time=1.0,
+            magazine_size=1,
+            magazine_reload_time=1.0,
+            max_targets=1,
+            explosive=False,
+            damage_type="physical",
+            projectile_shape="circle",
+            projectile_color1=(200, 200, 200),
+            projectile_size=5,
+            projectile_speed=0.5,
+            tower_visual_shape_type="polygon",
+            tower_visual_points=[(1.0, 0.0), (-0.5, 0.7), (-0.5, -0.7)],
+            tower_visual_size=10,
+            tower_visual_color=(180, 180, 180),
+        )
+    }
 
-TOWER_PRESETS = {
-    # Tower presets: name -> TowerStats
-    "basic":    TowerStats(range=180, damage=10, reload_time=1.0, magazine_size=1, magazine_reload_time=1.0, max_targets=1, explosive=False, damage_type="physical",
-                            projectile_shape="circle", projectile_color1=(200, 200, 200), projectile_size=5, projectile_speed=0.5,
-                            tower_visual_shape_type="polygon", tower_visual_points=[(1.0, 0.0), (-0.5, 0.7), (-0.5, -0.7)], tower_visual_size=10, tower_visual_color=(180, 180, 180)),
-    "sniper":   TowerStats(range=400, damage=50, reload_time=2.5, magazine_size=1, magazine_reload_time=2.5, max_targets=1, explosive=False, damage_type="physical",
-                            projectile_shape="triangle", projectile_color1=(100, 100, 255), projectile_size=5, projectile_speed=2,
-                            tower_visual_shape_type="polygon", tower_visual_points=[(1.5, 0.0), (-0.7, 0.3), (-0.7, -0.3)], tower_visual_size=12, tower_visual_color=(100, 100, 200)),
-    "rapid":    TowerStats(range=160,  damage=10,  reload_time=0.3, magazine_size=10, magazine_reload_time=4.0, max_targets=1, explosive=False, damage_type="physical",
-                            projectile_shape="circle", projectile_color1=(0, 255, 0), projectile_size=6, projectile_speed=0.5,
-                            tower_visual_shape_type="polygon", tower_visual_points=[(0.7, -0.7), (0.7, 0.7), (-0.7, 0.7), (-0.7, -0.7)], tower_visual_size=8, tower_visual_color=(0, 200, 0)),
-    "cannon":   TowerStats(range=160, damage=15, reload_time=1.5, magazine_size=1, magazine_reload_time=1.5, max_targets=1, explosive=True, explosion_radius=60, damage_type="physical",
-                            projectile_shape="circle", projectile_color1=(255, 100, 0), projectile_color2=(255,165,0), projectile_size=8, projectile_speed=0.5,
-                            tower_visual_shape_type="polygon", tower_visual_points=[(1,0), (0.5,0.866), (-0.5,0.866), (-1,0), (-0.5,-0.866), (0.5,-0.866)], tower_visual_size=10, tower_visual_color=(200, 80, 0)),
-    "flame":    TowerStats(range=160, damage=3, reload_time=0.04, magazine_size=120, magazine_reload_time=8.3, max_targets=3, explosive=False, damage_type="magic",
-                            projectile_shape="circle", projectile_color1=(255, 0, 0), projectile_color2=(255,200,0), projectile_size=7, projectile_speed=0.8,
-                            tower_visual_shape_type="polygon", tower_visual_points=[(0.8, 0.0), (-0.3, 0.9), (0.0, 0.0), (-0.3, -0.9)], tower_visual_size=11, tower_visual_color=(220, 0, 0)),
-    "basic 2": TowerStats(range=200, damage=40, reload_time=1, magazine_size=1, magazine_reload_time=1.0, max_targets=1, explosive=False, damage_type="physical",
-                            projectile_shape="circle", projectile_color1=(255, 255, 140), projectile_size=7, projectile_speed=0.7,
-                            tower_visual_shape_type="polygon", tower_visual_points=[(1.2, 0.0), (-0.6, 0.8), (-0.6, -0.8)], tower_visual_size=16, tower_visual_color=(255, 255, 180)),
-    "cannon 2": TowerStats(range=180, damage=40, reload_time=3, magazine_size=1, magazine_reload_time=1.5, max_targets=1, explosive=True, explosion_radius=100, damage_type="physical",
-                            projectile_shape="circle", projectile_color1=(255, 200, 0), projectile_color2=(255,220,0), projectile_size=12, projectile_speed=0.5,
-                            tower_visual_shape_type="polygon", tower_visual_points=[(1.2,0), (0.6,1.039), (-0.6,1.039), (-1.2,0), (-0.6,-1.039), (0.6,-1.039)], tower_visual_size=16, tower_visual_color=(255, 210, 60)),
-    "rapid 2": TowerStats(range=180, damage=15, reload_time=0.2, magazine_size=40, magazine_reload_time=12.0, max_targets=1, explosive=False, damage_type="physical",
-                            projectile_shape="circle", projectile_color1=(0, 255, 80), projectile_size=10, projectile_speed=0.6,
-                            tower_visual_shape_type="polygon", tower_visual_points=[(0.9, -0.9), (0.9, 0.9), (-0.9, 0.9), (-0.9, -0.9)], tower_visual_size=14, tower_visual_color=(0, 255, 80)),
-    "sniper 2": TowerStats(range=600, damage=100, reload_time=3.0, magazine_size=1, magazine_reload_time=3.0, max_targets=1, explosive=False, damage_type="physical",
-                            projectile_shape="triangle", projectile_color1=(120, 120, 255), projectile_size=10, projectile_speed=3,
-                            tower_visual_shape_type="polygon", tower_visual_points=[(1.8, 0.0), (-0.9, 0.4), (-0.9, -0.4)], tower_visual_size=18, tower_visual_color=(120, 120, 255)),
-    "flame 2": TowerStats(range=180, damage=4, reload_time=0.03, magazine_size=300, magazine_reload_time=10.0, max_targets=10, explosive=False, damage_type="magic",
-                            projectile_shape="circle", projectile_color1=(255, 60, 0), projectile_color2=(255,220,0), projectile_size=12, projectile_speed=1.0,
-                            tower_visual_shape_type="polygon", tower_visual_points=[(1.0, 0.0), (-0.4, 1.1), (0.0, 0.0), (-0.4, -1.1)], tower_visual_size=18, tower_visual_color=(255, 60, 0))
-}
+
+def load_tower_presets_from_json(json_path: str | None = None) -> dict[str, TowerStats]:
+    """Load tower presets from JSON and convert to TowerStats objects.
+
+    Returns a dict of preset_name -> TowerStats. Falls back to a minimal default on error.
+    """
+    if json_path is None:
+        json_path = os.path.join(con.DATA_DIR, "tower_presets.json")
+
+    try:
+        with open(json_path, "r") as f:
+            raw = json.load(f)
+    except Exception as e:
+        print(f"Error: Failed to load tower presets from {json_path}: {e}")
+        return _default_tower_presets()
+
+    presets: dict[str, TowerStats] = {}
+    for name, d in raw.items():
+        try:
+            projectile_color1 = tuple(d["projectile_color1"]) if d.get("projectile_color1") is not None else None
+            projectile_color2 = tuple(d["projectile_color2"]) if d.get("projectile_color2") is not None else None
+            tower_visual_color = tuple(d["tower_visual_color"]) if d.get("tower_visual_color") is not None else (200, 200, 200)
+            tower_visual_points = d.get("tower_visual_points") or []
+            # Ensure points are tuples for stability
+            tv_points = [tuple(p) for p in tower_visual_points]
+
+            stats = TowerStats(
+                range=d.get("range", 180),
+                damage=d.get("damage", 10),
+                reload_time=d.get("reload_time", 1.0),
+                magazine_size=d.get("magazine_size", 1),
+                magazine_reload_time=d.get("magazine_reload_time", 1.0),
+                max_targets=d.get("max_targets", 1),
+                damage_type=d.get("damage_type", "physical"),
+                explosive=d.get("explosive", False),
+                explosion_radius=d.get("explosion_radius", 30),
+                projectile_shape=d.get("projectile_shape", "circle"),
+                projectile_color1=projectile_color1,
+                projectile_color2=projectile_color2,
+                projectile_size=d.get("projectile_size", 5),
+                projectile_speed=d.get("projectile_speed", 1.0),
+                tower_visual_shape_type=d.get("tower_visual_shape_type", "circle"),
+                tower_visual_points=tv_points,
+                tower_visual_size=d.get("tower_visual_size", 8),
+                tower_visual_color=tower_visual_color,
+            )
+            stats.preset_name = name
+            presets[name] = stats
+        except Exception as e:
+            print(f"Warning: Skipping invalid tower preset '{name}': {e}")
+
+    if not presets:
+        print("Error: No valid tower presets loaded from JSON. Using defaults.")
+        return _default_tower_presets()
+
+    return presets
+
+
+# Load presets at import
+TOWER_PRESETS = load_tower_presets_from_json()
 
 
 def create_tower(pos: tuple[int, int], preset_name: str) -> Tower:

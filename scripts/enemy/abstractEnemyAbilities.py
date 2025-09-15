@@ -2,7 +2,8 @@ import json
 from math import inf
 import random
 import os
-from scripts import constants as root_project_constants, constants as con
+from .. import constants as root_project_constants
+from .. import constants as con
 import pygame as pg
 
 _loaded_enemy_templates = None

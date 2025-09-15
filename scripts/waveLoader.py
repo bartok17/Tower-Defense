@@ -1,9 +1,9 @@
 import json
 from random import choice, uniform
-from enemy.enemy import Enemy
+from .enemy.enemy import Enemy
 import os
-import constants as con
-from path_utils import generate_offset_path
+from . import constants as con
+from .path_utils import generate_offset_path
 
 waves_path = os.path.join(con.DATA_DIR, "waves.json")
 template_path = os.path.join(con.DATA_DIR, "enemyTemplates.json")

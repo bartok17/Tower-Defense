@@ -1,6 +1,6 @@
 import pygame as pg
-from scripts.economy.resourcesFactory import Factory
-from Tower import create_tower
+from ..economy.resourcesFactory import Factory
+from ..Tower import create_tower
 
 factories = []
 towers = []
@@ -45,7 +45,7 @@ def build_tower(position, blueprint, resource_manager):
 
 def upgrade_tower(position, blueprint, resource_manager):
     # Upgrade a tower at the given position if possible
-    from Tower import TOWER_PRESETS, create_tower
+    from ..Tower import TOWER_PRESETS, create_tower
 
     cost = blueprint.cost
     if not resource_manager.can_afford(cost):

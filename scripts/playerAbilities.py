@@ -1,6 +1,7 @@
 import time
 import pygame as pg
-from economy.resourcesManager import ResourcesManager
+from .economy.resourcesManager import ResourcesManager
+
 
 class PlayerAbilities:
     def __init__(self):
