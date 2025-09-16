@@ -1,6 +1,6 @@
 # Tower Defense — Launch Instructions
 
-This project is a Pygame-based tower defense game. To play, run the main script and use the in-game UI to build
+This project is a Pygame-based tower defense game. To play, run the main script and use the UI
 
 Links to key files:
 - Main entry point: [main.py](main.py)
