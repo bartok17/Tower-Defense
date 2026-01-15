@@ -19,7 +19,7 @@ Tower-Defense/
 ├── pyproject.toml           # Project configuration & dependencies
 ├── src/                     # Source code
 │   ├── main.py              # Application entry point
-│   ├── config/              # Configuration (settings, paths, colors)
+│   ├── config/              # Configuration
 │   ├── core/                # Core game logic
 │   │   ├── game.py          # Main game loop & context
 │   │   ├── game_world.py    # Game state & world logic
@@ -39,8 +39,8 @@ Tower-Defense/
 │   │   └── player_abilities.py # Player ability system
 │   ├── ui/                  # User interface
 │   │   ├── ui_manager.py    # UI coordination
-│   │   ├── components/      # Reusable UI components (Button, HUD)
-│   │   └── screens/         # Game screens (Menu, Level Select, Game, Ending)
+│   │   ├── components/      # Reusable UI components
+│   │   └── screens/         # Game screens
 │   └── utils/               # Utility modules
 ├── data/                    # JSON configuration files
 │   ├── enemyTemplates.json  # Enemy type definitions
@@ -48,7 +48,7 @@ Tower-Defense/
 │   ├── levels_config.json   # Level configurations
 │   ├── waves_level*.json    # Wave definitions per level
 │   └── map*_waypoints.json  # Waypoint paths per map
-├── assets/                  # Game assets (images, fonts)
+├── assets/                  # Game assets
 ├── tools/                   # Development tools
 │   ├── enemy_template_creator.py # Enemy template editor
 │   ├── wave_creator.py      # Wave configuration editor
@@ -138,19 +138,6 @@ tower-defense
 pytest
 ```
 
-### Code Quality
-
-```bash
-# Format code
-black src/ tests/
-
-# Lint
-ruff check src/ tests/
-
-# Type checking
-mypy src/
-```
-
 ### Development Tools
 
 Located in `tools/`:
@@ -170,4 +157,4 @@ MIT License — See [pyproject.toml](pyproject.toml) for details.
 
 ## Authors
 
-Bartosz Tokarz, Markexus
+Bartosz Tokarz,  Mateusz Ziajka
